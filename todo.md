@@ -26,3 +26,15 @@
 
 - [ ] Local state management with AsyncStorage
 - [x] Mock data for demonstration
+
+
+## KDS (Kitchen Display System) - Station Mode
+
+- [x] Mode selector (Phone/Staff vs Tablet/Station)
+- [x] Station selection screen (Expo, Grill, Sauté, Garde Manger, Plating)
+- [x] Expo/Command station with course firing controls
+- [x] Station display with order queue and big bump buttons
+- [x] Plating view showing course completion status
+- [x] Real-time sync across stations (context-based)
+- [x] Timer indicators for order pacing
+- [x] Event context and table grouping

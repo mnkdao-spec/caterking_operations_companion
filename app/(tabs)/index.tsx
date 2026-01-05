@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import * as Haptics from "expo-haptics";
 import { Platform } from "react-native";
+import { router } from "expo-router";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -121,6 +122,13 @@ export default function TodayScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     setSelectedEvent(selectedEvent?.id === event.id ? null : event);
+  };
+
+  const handleEnterKDS = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    }
+    router.push("/kds" as any);
   };
 
   const renderEventCard = ({ item }: { item: CateringEvent }) => {
@@ -248,16 +256,26 @@ export default function TodayScreen() {
     <ScreenContainer>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>
-          Today's Events
-        </Text>
-        <Text style={[styles.headerSubtitle, { color: colors.muted }]}>
-          {new Date().toLocaleDateString("en-US", {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-          })}
-        </Text>
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={[styles.headerTitle, { color: colors.foreground }]}>
+              Today's Events
+            </Text>
+            <Text style={[styles.headerSubtitle, { color: colors.muted }]}>
+              {new Date().toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              })}
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={handleEnterKDS}
+            style={[styles.kdsButton, { backgroundColor: "#1A1A1A" }]}
+          >
+            <Text style={styles.kdsButtonText}>🍽️ KDS</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Summary cards */}
@@ -327,6 +345,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 8,
+  },
+  headerTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  kdsButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+  },
+  kdsButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
   },
   headerTitle: {
     fontSize: 28,
