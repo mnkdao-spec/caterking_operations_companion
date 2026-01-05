@@ -1,0 +1,28 @@
+# CaterKing Operations Companion - TODO
+
+## Core Features
+
+- [x] App branding (logo, colors, app name)
+- [x] Tab bar navigation with 4 tabs (Today, Alerts, Tasks, Inventory)
+- [x] Today's Events screen with event list
+- [x] Event detail view with full information
+- [x] Kitchen Alerts screen with alert feed
+- [x] Alert type filtering and dismiss functionality
+- [x] Event Checklist screen with task management
+- [x] Task completion with checkbox interaction
+- [x] Inventory Quick-Check screen with search
+- [x] QR scanner button placeholder for future implementation
+- [ ] Profile/Settings screen with basic preferences
+
+## UI/UX Polish
+
+- [x] Custom theme colors (warm amber palette)
+- [x] Haptic feedback on interactions
+- [x] Pull-to-refresh on list screens
+- [x] Empty state designs
+- [ ] Loading states
+
+## Data Management
+
+- [ ] Local state management with AsyncStorage
+- [x] Mock data for demonstration
