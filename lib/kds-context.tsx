@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
+import { storage } from "./storage";
 
 // Types
 export type StationType = "expo" | "grill" | "saute" | "garde_manger" | "dessert" | "plating";
@@ -131,8 +132,46 @@ const MOCK_EVENT: Event = {
 };
 
 export function KDSProvider({ children }: { children: ReactNode }) {
-  const [currentEvent, setCurrentEvent] = useState<Event | null>(MOCK_EVENT);
+  const [activeEvent, setActiveEvent] = useState<Event | null>(null);
   const [firedCourses, setFiredCourses] = useState<FiredCourse[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load data from storage on mount
+  useEffect(() => {
+    loadKDSData();
+  }, []);
+
+  // Save data to storage whenever it changes
+  useEffect(() => {
+    if (!loading && activeEvent) {
+      saveKDSData();
+    }
+  }, [activeEvent, firedCourses, loading]);
+
+  const loadKDSData = async () => {
+    try {
+      setLoading(true);
+      const storedFiredCourses = await storage.load<FiredCourse[]>("FIRED_COURSES");
+      if (storedFiredCourses) {
+        setFiredCourses(storedFiredCourses);
+      }
+      // Use mock event for now
+      setActiveEvent(MOCK_EVENT);
+    } catch (error) {
+      console.error("Error loading KDS data:", error);
+      setActiveEvent(MOCK_EVENT);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveKDSData = async () => {
+    try {
+      await storage.save("FIRED_COURSES", firedCourses);
+    } catch (error) {
+      console.error("Error saving KDS data:", error);
+    }
+  };
 
   // Fire a course for a table group
   const fireCourse = useCallback((tableGroupId: string, courseNumber: number) => {

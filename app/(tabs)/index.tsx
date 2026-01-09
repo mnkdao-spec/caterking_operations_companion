@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Text,
   View,
@@ -15,6 +15,8 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { cn } from "@/lib/utils";
+import { LoadingSpinner, SkeletonList } from "@/components/ui/loading-spinner";
+import { storage } from "@/lib/storage";
 
 type EventStatus = "in_progress" | "upcoming" | "completed";
 
@@ -79,16 +81,45 @@ const MOCK_EVENTS: CateringEvent[] = [
 
 export default function TodayScreen() {
   const colors = useColors();
-  const [events, setEvents] = useState<CateringEvent[]>(MOCK_EVENTS);
+  const [events, setEvents] = useState<CateringEvent[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CateringEvent | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const onRefresh = useCallback(() => {
+  // Load events from storage on mount
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+      const storedEvents = await storage.load<CateringEvent[]>("EVENTS");
+      if (storedEvents && storedEvents.length > 0) {
+        setEvents(storedEvents);
+      } else {
+        // Use mock data if no stored events
+        setEvents(MOCK_EVENTS);
+        await storage.save("EVENTS", MOCK_EVENTS);
+      }
+    } catch (error) {
+      console.error("Error loading events:", error);
+      setEvents(MOCK_EVENTS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    // Simulate refresh
-    setTimeout(() => {
+    try {
+      await loadEvents();
+      await storage.updateLastSync();
+    } catch (error) {
+      console.error("Error refreshing events:", error);
+    } finally {
       setRefreshing(false);
-    }, 1000);
+    }
   }, []);
 
   const getStatusColor = (status: EventStatus) => {
@@ -322,20 +353,24 @@ export default function TodayScreen() {
       </View>
 
       {/* Events list */}
-      <FlatList
-        data={events}
-        renderItem={renderEventCard}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.primary}
-          />
-        }
-      />
+      {loading ? (
+        <SkeletonList count={3} className="p-4" />
+      ) : (
+        <FlatList
+          data={events}
+          renderItem={renderEventCard}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+            />
+          }
+        />
+      )}
     </ScreenContainer>
   );
 }
