@@ -20,11 +20,11 @@
 - [x] Haptic feedback on interactions
 - [x] Pull-to-refresh on list screens
 - [x] Empty state designs
-- [ ] Loading states
+- [x] Loading states
 
 ## Data Management
 
-- [ ] Local state management with AsyncStorage
+- [x] Local state management with AsyncStorage
 - [x] Mock data for demonstration
 
 
