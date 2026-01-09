@@ -92,3 +92,17 @@
 - [x] Test data persistence on app restart for all screens
 - [x] Verify state restoration works correctly
 - [x] Add data migration support for schema changes
+
+
+## Web ERP Application (Desktop Business Management)
+
+- [x] Initialize web app project structure
+- [x] Design desktop ERP architecture and navigation
+- [x] Executive Dashboard with revenue analytics and KPIs
+- [x] Event Management system with calendar and planning
+- [x] Menu Builder with recipes, ingredients, and pricing
+- [x] CRM system with client profiles and communication history
+- [x] Inventory Management with suppliers and purchase orders
+- [x] Financial reporting and profit analysis
+- [x] Staff management and scheduling
+- [ ] Integration with mobile app and KDS backend
