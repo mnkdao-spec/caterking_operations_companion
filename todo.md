@@ -49,3 +49,15 @@
 - [x] Add offline queue and sync resilience
 - [x] Test multi-tablet synchronization
 - [x] Add error handling and retry logic
+
+
+## Inventory Auto-Decrement Integration
+
+- [x] Design inventory schema and data structures
+- [x] Create Supabase inventory tables (ingredients, recipes, stock levels)
+- [x] Build inventory service layer with decrement logic
+- [x] Integrate inventory decrement into KDS bump workflow
+- [x] Add low-stock alerts and warnings
+- [x] Create inventory tracking UI screen
+- [x] Test inventory sync across tablets
+- [x] Add inventory history and audit logging
