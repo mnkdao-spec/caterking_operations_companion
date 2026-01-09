@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Text,
   View,
@@ -14,6 +14,8 @@ import { Platform } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
+import { storage } from "@/lib/storage";
+import { LoadingSpinner, SkeletonList } from "@/components/ui/loading-spinner";
 
 interface Task {
   id: string;
@@ -145,15 +147,51 @@ const MOCK_CHECKLISTS: EventChecklist[] = [
 
 export default function TasksScreen() {
   const colors = useColors();
-  const [checklists, setChecklists] = useState<EventChecklist[]>(MOCK_CHECKLISTS);
+  const [checklists, setChecklists] = useState<EventChecklist[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Load tasks from storage on mount
+  useEffect(() => {
+    loadTasks();
+  }, []);
+
+  // Save tasks to storage whenever they change
+  useEffect(() => {
+    if (!loading && checklists.length > 0) {
+      storage.save("TASKS", checklists);
+    }
+  }, [checklists, loading]);
+
+  const loadTasks = async () => {
+    try {
+      setLoading(true);
+      const storedTasks = await storage.load<EventChecklist[]>("TASKS");
+      if (storedTasks && storedTasks.length > 0) {
+        setChecklists(storedTasks);
+      } else {
+        setChecklists(MOCK_CHECKLISTS);
+        await storage.save("TASKS", MOCK_CHECKLISTS);
+      }
+    } catch (error) {
+      console.error("Error loading tasks:", error);
+      setChecklists(MOCK_CHECKLISTS);
+    } finally {
+      setLoading(false);
+    }
+  };
   const [expandedEvent, setExpandedEvent] = useState<string | null>("1");
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => {
+    try {
+      await loadTasks();
+      await storage.updateLastSync();
+    } catch (error) {
+      console.error("Error refreshing tasks:", error);
+    } finally {
       setRefreshing(false);
-    }, 1000);
+    }
   }, []);
 
   const toggleTask = (eventId: string, taskId: string) => {
@@ -360,20 +398,24 @@ export default function TasksScreen() {
       </View>
 
       {/* Checklists */}
-      <FlatList
-        data={checklists}
-        renderItem={renderChecklist}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.primary}
-          />
-        }
-      />
+      {loading ? (
+        <SkeletonList count={2} className="p-4" />
+      ) : (
+        <FlatList
+          data={checklists}
+          renderItem={renderChecklist}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+            />
+          }
+        />
+      )}
     </ScreenContainer>
   );
 }

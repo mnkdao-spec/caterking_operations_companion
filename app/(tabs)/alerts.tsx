@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Text,
   View,
@@ -13,6 +13,8 @@ import { Platform } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
+import { storage } from "@/lib/storage";
+import { LoadingSpinner, SkeletonList } from "@/components/ui/loading-spinner";
 
 type AlertType = "warning" | "success" | "info" | "error";
 
@@ -85,15 +87,51 @@ type FilterType = "all" | "warning" | "success" | "info" | "error";
 
 export default function AlertsScreen() {
   const colors = useColors();
-  const [alerts, setAlerts] = useState<KitchenAlert[]>(MOCK_ALERTS);
+  const [alerts, setAlerts] = useState<KitchenAlert[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<FilterType>("all");
+  const [loading, setLoading] = useState(true);
 
-  const onRefresh = useCallback(() => {
+  // Load alerts from storage on mount
+  useEffect(() => {
+    loadAlerts();
+  }, []);
+
+  // Save alerts to storage whenever they change
+  useEffect(() => {
+    if (!loading && alerts.length > 0) {
+      storage.save("ALERTS", alerts);
+    }
+  }, [alerts, loading]);
+
+  const loadAlerts = async () => {
+    try {
+      setLoading(true);
+      const storedAlerts = await storage.load<KitchenAlert[]>("ALERTS");
+      if (storedAlerts && storedAlerts.length > 0) {
+        setAlerts(storedAlerts);
+      } else {
+        setAlerts(MOCK_ALERTS);
+        await storage.save("ALERTS", MOCK_ALERTS);
+      }
+    } catch (error) {
+      console.error("Error loading alerts:", error);
+      setAlerts(MOCK_ALERTS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => {
+    try {
+      await loadAlerts();
+      await storage.updateLastSync();
+    } catch (error) {
+      console.error("Error refreshing alerts:", error);
+    } finally {
       setRefreshing(false);
-    }, 1000);
+    }
   }, []);
 
   const getAlertColor = (type: AlertType) => {
@@ -262,32 +300,36 @@ export default function AlertsScreen() {
       </View>
 
       {/* Alerts list */}
-      <FlatList
-        data={filteredAlerts}
-        renderItem={renderAlertItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.primary}
-          />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <IconSymbol
-              name="checkmark.circle.fill"
-              size={48}
-              color={colors.muted}
+      {loading ? (
+        <SkeletonList count={4} className="p-4" />
+      ) : (
+        <FlatList
+          data={filteredAlerts}
+          renderItem={renderAlertItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
             />
-            <Text style={[styles.emptyText, { color: colors.muted }]}>
-              No alerts to show
-            </Text>
-          </View>
-        }
-      />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <IconSymbol
+                name="checkmark.circle.fill"
+                size={48}
+                color={colors.muted}
+              />
+              <Text style={[styles.emptyText, { color: colors.muted }]}>
+                No alerts to show
+              </Text>
+            </View>
+          }
+        />
+      )}
     </ScreenContainer>
   );
 }

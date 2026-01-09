@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Text,
   View,
@@ -14,6 +14,8 @@ import { Platform } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
+import { storage } from "@/lib/storage";
+import { LoadingSpinner, SkeletonList } from "@/components/ui/loading-spinner";
 
 type StockStatus = "ok" | "low" | "critical";
 
@@ -124,16 +126,52 @@ type FilterCategory = "all" | "critical" | "low" | "ok";
 
 export default function InventoryScreen() {
   const colors = useColors();
-  const [inventory, setInventory] = useState<InventoryItem[]>(MOCK_INVENTORY);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  // Load inventory from storage on mount
+  useEffect(() => {
+    loadInventory();
+  }, []);
+
+  // Save inventory to storage whenever it changes
+  useEffect(() => {
+    if (!loading && inventory.length > 0) {
+      storage.save("STOCK_LEVELS", inventory);
+    }
+  }, [inventory, loading]);
+
+  const loadInventory = async () => {
+    try {
+      setLoading(true);
+      const storedInventory = await storage.load<InventoryItem[]>("STOCK_LEVELS");
+      if (storedInventory && storedInventory.length > 0) {
+        setInventory(storedInventory);
+      } else {
+        setInventory(MOCK_INVENTORY);
+        await storage.save("STOCK_LEVELS", MOCK_INVENTORY);
+      }
+    } catch (error) {
+      console.error("Error loading inventory:", error);
+      setInventory(MOCK_INVENTORY);
+    } finally {
+      setLoading(false);
+    }
+  };
   const [filter, setFilter] = useState<FilterCategory>("all");
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => {
+    try {
+      await loadInventory();
+      await storage.updateLastSync();
+    } catch (error) {
+      console.error("Error refreshing inventory:", error);
+    } finally {
       setRefreshing(false);
-    }, 1000);
+    }
   }, []);
 
   const getStatusColor = (status: StockStatus) => {
@@ -396,28 +434,32 @@ export default function InventoryScreen() {
       </View>
 
       {/* Inventory list */}
-      <FlatList
-        data={filteredInventory}
-        renderItem={renderInventoryItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.primary}
-          />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <IconSymbol name="cube.box.fill" size={48} color={colors.muted} />
-            <Text style={[styles.emptyText, { color: colors.muted }]}>
-              No items found
-            </Text>
-          </View>
-        }
-      />
+      {loading ? (
+        <SkeletonList count={5} className="p-4" />
+      ) : (
+        <FlatList
+          data={filteredInventory}
+          renderItem={renderInventoryItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <IconSymbol name="cube.box.fill" size={48} color={colors.muted} />
+              <Text style={[styles.emptyText, { color: colors.muted }]}>
+                No items found
+              </Text>
+            </View>
+          }
+        />
+      )}
     </ScreenContainer>
   );
 }
