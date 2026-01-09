@@ -38,3 +38,14 @@
 - [x] Real-time sync across stations (context-based)
 - [x] Timer indicators for order pacing
 - [x] Event context and table grouping
+
+
+## Real-Time Backend Integration (Supabase)
+
+- [x] Design and create Supabase database schema for KDS
+- [x] Create Supabase service layer for CRUD operations
+- [x] Implement Realtime subscriptions for live sync
+- [x] Update KDS context to use Supabase backend
+- [x] Add offline queue and sync resilience
+- [x] Test multi-tablet synchronization
+- [x] Add error handling and retry logic

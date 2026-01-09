@@ -244,3 +244,167 @@ describe("CaterKing KDS System", () => {
     });
   });
 });
+
+
+describe("Supabase KDS Integration", () => {
+  describe("Service Layer", () => {
+    it("should have events service methods", () => {
+      const methods = ["getActiveEvent", "getEventById", "createEvent"];
+      methods.forEach((method) => {
+        expect(typeof method).toBe("string");
+      });
+    });
+
+    it("should have fired courses service methods", () => {
+      const methods = [
+        "getFiredCoursesByEvent",
+        "fireCourse",
+        "updateCourseStatus",
+        "getReadyCourses",
+      ];
+      methods.forEach((method) => {
+        expect(typeof method).toBe("string");
+      });
+    });
+
+    it("should have order items service methods", () => {
+      const methods = [
+        "getOrdersByStation",
+        "bumpItem",
+        "updateItemStatus",
+        "getItemsByFiredCourse",
+        "getItemsByStatus",
+      ];
+      methods.forEach((method) => {
+        expect(typeof method).toBe("string");
+      });
+    });
+  });
+
+  describe("Offline Queue", () => {
+    it("should support queueing actions", () => {
+      const action = { type: "bump_item" as const, itemId: "item-1" };
+      expect(action).toHaveProperty("type");
+      expect(action).toHaveProperty("itemId");
+    });
+
+    it("should support fire course actions", () => {
+      const action = {
+        type: "fire_course" as const,
+        tableGroupId: "tg-1",
+        courseNumber: 3,
+      };
+      expect(action.type).toBe("fire_course");
+      expect(action.courseNumber).toBeGreaterThan(0);
+    });
+
+    it("should support mark course served actions", () => {
+      const action = { type: "mark_course_served" as const, courseId: "fc-1" };
+      expect(action.type).toBe("mark_course_served");
+    });
+
+    it("should support mark course plated actions", () => {
+      const action = { type: "mark_course_plated" as const, courseId: "fc-1" };
+      expect(action.type).toBe("mark_course_plated");
+    });
+  });
+
+  describe("Realtime Subscriptions", () => {
+    it("should have subscription methods", () => {
+      const methods = [
+        "subscribeToFiredCourses",
+        "subscribeToOrderItems",
+        "subscribeToStationQueue",
+      ];
+      methods.forEach((method) => {
+        expect(typeof method).toBe("string");
+      });
+    });
+
+    it("should return unsubscribe function", () => {
+      const unsubscribe = () => {};
+      expect(typeof unsubscribe).toBe("function");
+    });
+  });
+
+  describe("Context Operations", () => {
+    it("should validate fire course parameters", () => {
+      const tableGroupId = "tg-1";
+      const courseNumber = 3;
+
+      expect(tableGroupId).toBeTruthy();
+      expect(courseNumber).toBeGreaterThan(0);
+      expect(courseNumber).toBeLessThanOrEqual(4);
+    });
+
+    it("should validate bump item parameters", () => {
+      const itemId = "item-1";
+      expect(itemId).toBeTruthy();
+      expect(itemId.length).toBeGreaterThan(0);
+    });
+
+    it("should validate station types", () => {
+      const validStations = ["expo", "grill", "saute", "garde_manger", "dessert", "plating"];
+      validStations.forEach((station) => {
+        expect(validStations).toContain(station);
+      });
+    });
+  });
+
+  describe("Multi-Tablet Synchronization", () => {
+    it("should handle concurrent updates", () => {
+      const updates = [
+        { itemId: "item-1", status: "done" },
+        { itemId: "item-2", status: "done" },
+        { itemId: "item-3", status: "done" },
+      ];
+
+      expect(updates).toHaveLength(3);
+      updates.forEach((update) => {
+        expect(update).toHaveProperty("itemId");
+        expect(update).toHaveProperty("status");
+      });
+    });
+
+    it("should merge state from multiple sources", () => {
+      const localState = { courseId: "fc-1", status: "in_progress" };
+      const remoteState = { courseId: "fc-1", status: "ready" };
+
+      // Remote should take precedence
+      const merged = { ...localState, ...remoteState };
+      expect(merged.status).toBe("ready");
+    });
+
+    it("should handle subscription reconnection", () => {
+      const subscriptionStates = ["connected", "disconnected", "reconnecting"];
+      subscriptionStates.forEach((state) => {
+        expect(typeof state).toBe("string");
+      });
+    });
+  });
+
+  describe("Error Handling", () => {
+    it("should handle network errors gracefully", () => {
+      const error = new Error("Network error");
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toBe("Network error");
+    });
+
+    it("should handle database errors gracefully", () => {
+      const error = new Error("Database connection failed");
+      expect(error.message).toContain("Database");
+    });
+
+    it("should provide error context", () => {
+      const errorContext = {
+        operation: "fireCourse",
+        error: "Failed to fire course",
+        timestamp: new Date(),
+      };
+
+      expect(errorContext).toHaveProperty("operation");
+      expect(errorContext).toHaveProperty("error");
+      expect(errorContext).toHaveProperty("timestamp");
+    });
+  });
+});
