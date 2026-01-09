@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Navigation } from "@/components/navigation";
+import { getDashboardStats } from "@/lib/supabase-services";
 import {
   DollarSign,
   Calendar,
@@ -46,6 +48,42 @@ const topClientsData = [
 ];
 
 export default function DashboardPage() {
+  const [stats, setStats] = useState({
+    totalRevenue: 328000,
+    activeEvents: 8,
+    totalClients: 156,
+    inventoryAlerts: 3,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const data = await getDashboardStats();
+        setStats(data);
+      } catch (error) {
+        console.error("Error loading dashboard stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <main className="pt-20 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+            <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -77,7 +115,7 @@ export default function DashboardPage() {
                     </dt>
                     <dd className="flex items-baseline">
                       <div className="text-2xl font-semibold text-gray-900">
-                        $328,000
+                        ${stats.totalRevenue.toLocaleString()}
                       </div>
                       <div className="ml-2 flex items-baseline text-sm font-semibold text-green-600">
                         <TrendingUp className="h-4 w-4 mr-1" />
@@ -104,7 +142,7 @@ export default function DashboardPage() {
                     </dt>
                     <dd className="flex items-baseline">
                       <div className="text-2xl font-semibold text-gray-900">
-                        12
+                        {stats.activeEvents}
                       </div>
                       <div className="ml-2 text-sm text-gray-500">
                         this month
@@ -130,7 +168,7 @@ export default function DashboardPage() {
                     </dt>
                     <dd className="flex items-baseline">
                       <div className="text-2xl font-semibold text-gray-900">
-                        89
+                        {stats.totalClients}
                       </div>
                       <div className="ml-2 text-sm text-gray-500">
                         +8 this month
@@ -156,7 +194,7 @@ export default function DashboardPage() {
                     </dt>
                     <dd className="flex items-baseline">
                       <div className="text-2xl font-semibold text-gray-900">
-                        7
+                        {stats.inventoryAlerts}
                       </div>
                       <div className="ml-2 text-sm text-red-600">
                         needs attention

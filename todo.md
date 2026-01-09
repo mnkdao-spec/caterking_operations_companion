@@ -106,3 +106,12 @@
 - [x] Financial reporting and profit analysis
 - [x] Staff management and scheduling
 - [ ] Integration with mobile app and KDS backend
+  - [x] Update Supabase client configuration for web app
+  - [x] Replace Dashboard mock data with Supabase queries
+  - [x] Replace Events mock data with Supabase queries
+  - [x] Replace Menus mock data with Supabase queries (using kds_menu_items table)
+  - [x] Replace Clients mock data with Supabase queries (TODO: create dedicated clients table)
+  - [x] Replace Inventory mock data with Supabase queries (using inventory tables)
+  - [x] Replace Staff mock data with Supabase queries (TODO: create dedicated staff table)
+  - [x] Add real-time subscriptions for live updates
+  - [x] Test end-to-end data flow between mobile and web

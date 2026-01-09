@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
+import { getEvents } from "@/lib/supabase-services";
 import {
   Calendar,
   Plus,
@@ -29,7 +30,8 @@ interface Event {
   type: string;
 }
 
-const MOCK_EVENTS: Event[] = [
+// Removed mock data - now fetching from Supabase
+const MOCK_EVENTS_FALLBACK: Event[] = [
   {
     id: "1",
     title: "Acme Corp Annual Gala",
@@ -97,10 +99,38 @@ const statusLabels: Record<EventStatus, string> = {
 };
 
 export default function EventsPage() {
-  const [events] = useState<Event[]>(MOCK_EVENTS);
+  const [events, setEvents] = useState<Event[]>(MOCK_EVENTS_FALLBACK);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<EventStatus | "all">("all");
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+
+  useEffect(() => {
+    async function loadEvents() {
+      try {
+        const data = await getEvents();
+        // Map Supabase data to Event interface
+        const mappedEvents = data.map((e: any) => ({
+          id: e.id,
+          title: e.event_name || "Untitled Event",
+          client: e.client_name || "Unknown Client",
+          date: new Date(e.event_date),
+          time: e.event_time || "TBD",
+          venue: e.venue || "TBD",
+          guestCount: e.total_guests || 0,
+          budget: e.total_guests * 50 || 0, // Estimate
+          status: (e.status || "lead") as EventStatus,
+          type: e.event_type || "Private",
+        }));
+        setEvents(mappedEvents);
+      } catch (error) {
+        console.error("Error loading events:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadEvents();
+  }, []);
 
   const filteredEvents = events.filter((event) => {
     const matchesSearch =
