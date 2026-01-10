@@ -491,17 +491,32 @@ export interface StaffConflict {
 
 export async function checkStaffConflicts(
   staffId: string,
-  startTime: string,
-  endTime: string
+  eventId: string | null,
+  eventDate: string,
+  eventTime: string
 ): Promise<StaffConflict[]> {
+  console.log('Checking staff conflicts with params:', {
+    p_staff_id: staffId,
+    p_event_id: eventId,
+    p_event_date: eventDate,
+    p_event_time: eventTime
+  });
+  
   const { data, error } = await supabase.rpc('check_staff_conflicts', {
     p_staff_id: staffId,
-    p_start_time: startTime,
-    p_end_time: endTime
+    p_event_id: eventId,
+    p_event_date: eventDate,
+    p_event_time: eventTime
   });
   
   if (error) {
-    console.error("Error checking staff conflicts:", error);
+    console.error("Error checking staff conflicts:", {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+      fullError: error
+    });
     return [];
   }
   

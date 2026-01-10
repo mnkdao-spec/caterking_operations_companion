@@ -215,3 +215,12 @@
 - [x] Update check_staff_conflicts() function to use correct event_date column (migration 009)
 - [x] Add Schedule button functionality on Staff page to navigate to scheduling
 - [x] Test conflict detection with overlapping events
+
+
+## Debug Conflict Detection Error
+
+- [x] Verify check_staff_conflicts() function exists in Supabase
+- [x] Check function return format matches what code expects
+- [x] Add detailed error logging to see actual error message
+- [ ] Test function directly in Supabase SQL editor
+- [x] Fix function call or database function based on findings (migration 010)

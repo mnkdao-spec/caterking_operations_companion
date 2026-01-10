@@ -107,16 +107,25 @@ export default function SchedulePage() {
 
     setCheckingConflicts(true);
     try {
-      const hours = parseFloat(estimatedHours) || 8;
-      const eventStart = new Date(`${selectedEvent.event_date}T${selectedEvent.event_time}`);
-      const eventEnd = new Date(eventStart.getTime() + hours * 60 * 60 * 1000);
+      // Extract date and time from event
+      const eventDate = selectedEvent.event_date; // Already in YYYY-MM-DD format
+      const eventTime = selectedEvent.event_time; // Already in HH:MM:SS format
+
+      console.log('Checking conflicts for:', {
+        staffId: selectedStaff,
+        eventId: selectedEvent.id,
+        eventDate,
+        eventTime
+      });
 
       const conflictData = await checkStaffConflicts(
         selectedStaff,
-        eventStart.toISOString(),
-        eventEnd.toISOString()
+        selectedEvent.id,
+        eventDate,
+        eventTime
       );
 
+      console.log('Conflict check result:', conflictData);
       setConflicts(conflictData);
     } catch (error) {
       console.error("Error checking conflicts:", error);
@@ -128,7 +137,8 @@ export default function SchedulePage() {
 
   useEffect(() => {
     checkForConflicts();
-  }, [selectedStaff, selectedEvent, estimatedHours]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedStaff, selectedEvent?.id, estimatedHours]);
 
   async function handleAssignStaff() {
     if (!selectedEvent || !selectedStaff || !assignmentRole) {
@@ -368,11 +378,32 @@ export default function SchedulePage() {
                 </label>
                 <select
                   value={selectedStaff}
-                  onChange={(e) => {
-                    setSelectedStaff(e.target.value);
-                    const staffMember = staff.find((s) => s.id === e.target.value);
+                  onChange={async (e) => {
+                    const staffId = e.target.value;
+                    setSelectedStaff(staffId);
+                    const staffMember = staff.find((s) => s.id === staffId);
                     if (staffMember) {
                       setAssignmentRole(staffMember.role);
+                    }
+                    // Trigger conflict check immediately
+                    if (staffId && selectedEvent) {
+                      setCheckingConflicts(true);
+                      try {
+                        const eventDate = selectedEvent.event_date;
+                        const eventTime = selectedEvent.event_time;
+                        const conflictData = await checkStaffConflicts(
+                          staffId,
+                          selectedEvent.id,
+                          eventDate,
+                          eventTime
+                        );
+                        setConflicts(conflictData);
+                      } catch (error) {
+                        console.error("Error checking conflicts:", error);
+                        setConflicts([]);
+                      } finally {
+                        setCheckingConflicts(false);
+                      }
                     }
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
