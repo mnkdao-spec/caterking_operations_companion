@@ -1,6 +1,7 @@
 import { useState, FormEvent } from "react";
 import { Modal } from "./modal";
-import { createEvent, updateEvent } from "@/lib/supabase-services";
+import { createEvent, updateEvent, getClients } from "@/lib/supabase-services";
+import { useEffect } from "react";
 
 interface EventFormProps {
   isOpen: boolean;
@@ -21,9 +22,25 @@ export function EventForm({ isOpen, onClose, onSuccess, event }: EventFormProps)
     status: event?.status || "lead",
     budget: event?.budget || "",
     notes: event?.notes || "",
+    client_id: event?.client_id || "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [clients, setClients] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadClients = async () => {
+      try {
+        const data = await getClients();
+        setClients(data);
+      } catch (error) {
+        console.error("Error loading clients:", error);
+      }
+    };
+    if (isOpen) {
+      loadClients();
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -79,6 +96,28 @@ export function EventForm({ isOpen, onClose, onSuccess, event }: EventFormProps)
               placeholder="e.g., Smith Wedding Reception"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             />
+          </div>
+
+          {/* Client */}
+          <div className="col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Client
+            </label>
+            <select
+              value={formData.client_id}
+              onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            >
+              <option value="">Select a client (optional)</option>
+              {clients.map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.company_name || client.contact_name} - {client.email}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-500">
+              Link this event to an existing client for better CRM tracking
+            </p>
           </div>
 
           {/* Event Date */}

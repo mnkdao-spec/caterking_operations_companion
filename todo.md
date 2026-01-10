@@ -138,3 +138,19 @@
 - [x] Build Event create/edit form
 - [x] Build Menu Item create/edit form
 - [x] Test all CRUD operations
+
+
+## Edit/Delete Functionality & Event-Client Linking
+
+- [x] Create delete confirmation dialog component
+- [x] Wire up Edit buttons on Clients page to open form in edit mode
+- [x] Wire up Delete buttons on Clients page with confirmation
+- [x] Wire up Edit buttons on Staff page to open form in edit mode
+- [x] Wire up Delete buttons on Staff page with confirmation
+- [x] Wire up Edit buttons on Events page to open form in edit mode
+- [x] Wire up Delete buttons on Events page with confirmation
+- [x] Wire up Edit buttons on Menus page to open form in edit mode
+- [x] Wire up Delete buttons on Menus page with confirmation
+- [x] Add client dropdown to Event form
+- [x] Create client_id relationship in kds_events table
+- [x] Test Event-Client linking end-to-end

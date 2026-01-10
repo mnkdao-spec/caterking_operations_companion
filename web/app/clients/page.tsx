@@ -297,14 +297,25 @@ export default function ClientsPage() {
                 )}
 
                 {/* Actions */}
-                <div className="mt-4 flex gap-2">
-                  <button className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    <Mail className="h-4 w-4 mr-1" />
-                    Email
+                <div className="mt-4 pt-4 border-t border-gray-200 flex gap-2">
+                  <button
+                    onClick={() => {
+                      setEditingClient(client);
+                      setIsFormOpen(true);
+                    }}
+                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
                   </button>
-                  <button className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    Book Event
+                  <button
+                    onClick={() => {
+                      setClientToDelete(client);
+                      setDeleteDialogOpen(true);
+                    }}
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               </div>
