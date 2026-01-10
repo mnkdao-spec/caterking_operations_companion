@@ -3,11 +3,7 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
 import { getEvents } from "@/lib/supabase-services";
-import { useRealtimeSubscriptions } from "@/hooks/use-realtime-subscription";
 import { EventForm } from "@/components/event-form";
-import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog";
-import { deleteEvent } from "@/lib/supabase-services";
-import { Edit, Trash2 } from "lucide-react";
 import {
   Calendar,
   Plus,
@@ -111,9 +107,6 @@ export default function EventsPage() {
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<any>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [eventToDelete, setEventToDelete] = useState<any>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const loadEvents = async () => {
     try {
@@ -143,34 +136,8 @@ export default function EventsPage() {
     loadEvents();
   }, []);
 
-  // Real-time subscriptions
-  useRealtimeSubscriptions([
-    {
-      table: "kds_events",
-      onInsert: () => loadEvents(),
-      onUpdate: () => loadEvents(),
-      onDelete: () => loadEvents(),
-    },
-  ]);
-
   const handleFormSuccess = () => {
     loadEvents();
-  };
-
-  const handleDelete = async () => {
-    if (!eventToDelete) return;
-    setDeleteLoading(true);
-    try {
-      await deleteEvent(eventToDelete.id);
-      setDeleteDialogOpen(false);
-      setEventToDelete(null);
-      loadEvents();
-    } catch (error) {
-      console.error("Error deleting event:", error);
-      alert("Failed to delete event");
-    } finally {
-      setDeleteLoading(false);
-    }
   };
 
   const filteredEvents = events.filter((event) => {
@@ -268,7 +235,7 @@ export default function EventsPage() {
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200">
               {filteredEvents.map((event) => (
-                <li key={event.id} className="hover:bg-gray-50">
+                <li key={event.id} className="hover:bg-gray-50 cursor-pointer">
                   <div className="px-4 py-4 sm:px-6">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
@@ -316,28 +283,6 @@ export default function EventsPage() {
                           <span className="px-2 py-1 text-xs rounded bg-gray-100">
                             {event.type}
                           </span>
-                        </div>
-                        {/* Action Buttons */}
-                        <div className="mt-4 pt-4 border-t border-gray-200 flex gap-2">
-                          <button
-                            onClick={() => {
-                              setEditingEvent(event);
-                              setIsFormOpen(true);
-                            }}
-                            className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                          >
-                            <Edit className="h-4 w-4 mr-1" />
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEventToDelete(event);
-                              setDeleteDialogOpen(true);
-                            }}
-                            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -389,20 +334,6 @@ export default function EventsPage() {
         }}
         onSuccess={handleFormSuccess}
         event={editingEvent}
-      />
-
-      {/* Delete Confirmation Dialog */}
-      <DeleteConfirmDialog
-        isOpen={deleteDialogOpen}
-        onClose={() => {
-          setDeleteDialogOpen(false);
-          setEventToDelete(null);
-        }}
-        onConfirm={handleDelete}
-        title="Delete Event"
-        message="Are you sure you want to delete this event? This will remove all associated data."
-        itemName={eventToDelete?.title}
-        loading={deleteLoading}
       />
     </div>
   );
