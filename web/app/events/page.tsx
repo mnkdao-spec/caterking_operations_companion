@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
 import { getEvents } from "@/lib/supabase-services";
+import { EventForm } from "@/components/event-form";
 import {
   Calendar,
   Plus,
@@ -104,10 +105,11 @@ export default function EventsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<EventStatus | "all">("all");
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<any>(null);
 
-  useEffect(() => {
-    async function loadEvents() {
-      try {
+  const loadEvents = async () => {
+    try {
         const data = await getEvents();
         // Map Supabase data to Event interface
         const mappedEvents = data.map((e: any) => ({
@@ -125,12 +127,18 @@ export default function EventsPage() {
         setEvents(mappedEvents);
       } catch (error) {
         console.error("Error loading events:", error);
-      } finally {
-        setLoading(false);
-      }
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadEvents();
   }, []);
+
+  const handleFormSuccess = () => {
+    loadEvents();
+  };
 
   const filteredEvents = events.filter((event) => {
     const matchesSearch =
@@ -153,7 +161,12 @@ export default function EventsPage() {
               Manage and track all your catering events
             </p>
           </div>
-          <button className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700">
+          <button
+            onClick={() => {
+              setEditingEvent(null);
+              setIsFormOpen(true);
+            }}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700">
             <Plus className="h-5 w-5 mr-2" />
             New Event
           </button>
@@ -311,6 +324,17 @@ export default function EventsPage() {
           </div>
         )}
       </main>
+
+      {/* Event Form Modal */}
+      <EventForm
+        isOpen={isFormOpen}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingEvent(null);
+        }}
+        onSuccess={handleFormSuccess}
+        event={editingEvent}
+      />
     </div>
   );
 }

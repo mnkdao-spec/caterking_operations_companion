@@ -134,7 +134,7 @@
 - [x] Create form validation utilities
 - [x] Add Supabase insert/update/delete functions
 - [x] Build Client create/edit form
-- [ ] Build Staff create/edit form
-- [ ] Build Event create/edit form
-- [ ] Build Menu Item create/edit form
-- [ ] Test all CRUD operations
+- [x] Build Staff create/edit form
+- [x] Build Event create/edit form
+- [x] Build Menu Item create/edit form
+- [x] Test all CRUD operations

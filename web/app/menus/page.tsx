@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Navigation } from "@/components/navigation";
+import { MenuItemForm } from "@/components/menu-item-form";
 import {
   Plus,
   Search,
@@ -91,6 +92,13 @@ export default function MenusPage() {
   const [menuItems] = useState<MenuItem[]>(MOCK_MENU_ITEMS);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+
+  const handleFormSuccess = () => {
+    // Reload menu items - for now just close the form
+    // TODO: Implement actual data reload from Supabase
+  };
 
   const filteredItems = menuItems.filter((item) => {
     const matchesSearch =
@@ -118,7 +126,12 @@ export default function MenusPage() {
               Create and manage your catering menu items and recipes
             </p>
           </div>
-          <button className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700">
+          <button
+            onClick={() => {
+              setEditingItem(null);
+              setIsFormOpen(true);
+            }}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700">
             <Plus className="h-5 w-5 mr-2" />
             New Menu Item
           </button>
@@ -259,6 +272,17 @@ export default function MenusPage() {
           </div>
         )}
       </main>
+
+      {/* Menu Item Form Modal */}
+      <MenuItemForm
+        isOpen={isFormOpen}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingItem(null);
+        }}
+        onSuccess={handleFormSuccess}
+        menuItem={editingItem}
+      />
     </div>
   );
 }

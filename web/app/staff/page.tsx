@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
 import { getStaff } from "@/lib/supabase-services";
+import { StaffForm } from "@/components/staff-form";
 import {
   Plus,
   Search,
@@ -105,10 +106,11 @@ export default function StaffPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState("All");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<any>(null);
 
-  useEffect(() => {
-    async function loadStaff() {
-      try {
+  const loadStaff = async () => {
+    try {
         const data = await getStaff();
         // Map Supabase data to StaffMember interface
         const mappedStaff = data.map((s: any) => ({
@@ -127,12 +129,18 @@ export default function StaffPage() {
         setStaff(mappedStaff);
       } catch (error) {
         console.error("Error loading staff:", error);
-      } finally {
-        setLoading(false);
-      }
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadStaff();
   }, []);
+
+  const handleFormSuccess = () => {
+    loadStaff();
+  };
 
   const filteredStaff = staff.filter((member) => {
     const matchesSearch =
@@ -180,7 +188,12 @@ export default function StaffPage() {
               Manage your team and track performance
             </p>
           </div>
-          <button className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700">
+          <button
+            onClick={() => {
+              setEditingStaff(null);
+              setIsFormOpen(true);
+            }}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700">
             <Plus className="h-5 w-5 mr-2" />
             Add Staff Member
           </button>
@@ -373,6 +386,17 @@ export default function StaffPage() {
           </div>
         )}
       </main>
+
+      {/* Staff Form Modal */}
+      <StaffForm
+        isOpen={isFormOpen}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingStaff(null);
+        }}
+        onSuccess={handleFormSuccess}
+        staff={editingStaff}
+      />
     </div>
   );
 }
