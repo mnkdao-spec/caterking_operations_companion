@@ -224,3 +224,17 @@
 - [x] Add detailed error logging to see actual error message
 - [ ] Test function directly in Supabase SQL editor
 - [x] Fix function call or database function based on findings (migration 010)
+
+
+## Invoice Generation
+
+- [x] Create invoices table schema (migration 016)
+- [x] Create invoice_items table for line items
+- [x] Build invoice generation service function
+- [x] Calculate labor costs from staff assignments
+- [x] Calculate tax and total amounts
+- [x] Create Invoices page UI
+- [x] Add "Generate Invoice" button for completed events
+- [x] Display invoice list with status
+- [x] Add Invoices link to navigation
+- [ ] Test invoice generation end-to-end

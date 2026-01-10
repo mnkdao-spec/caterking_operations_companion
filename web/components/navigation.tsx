@@ -11,6 +11,7 @@ import {
   FileText,
   UserCog,
   CalendarClock,
+  Receipt,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ const navigation = [
   { name: "Menus", href: "/menus", icon: UtensilsCrossed },
   { name: "Clients", href: "/clients", icon: Users },
   { name: "Inventory", href: "/inventory", icon: Package },
+  { name: "Invoices", href: "/invoices", icon: Receipt },
   { name: "Reports", href: "/reports", icon: FileText },
   { name: "Staff", href: "/staff", icon: UserCog },
 ];
