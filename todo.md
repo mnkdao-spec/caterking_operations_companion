@@ -207,3 +207,11 @@
 - [x] Add edit button to Staff page with update functionality
 - [x] Add edit button to Menus page with update functionality
 - [ ] Test editing records across all pages
+
+
+## Fix Conflict Detection Error
+
+- [x] Check events table schema for correct column names
+- [x] Update check_staff_conflicts() function to use correct event_date column (migration 009)
+- [x] Add Schedule button functionality on Staff page to navigate to scheduling
+- [ ] Test conflict detection with overlapping events

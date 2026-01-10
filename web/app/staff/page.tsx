@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Navigation } from "@/components/navigation";
 import { getStaff } from "@/lib/supabase-services";
 import { StaffForm } from "@/components/staff-form";
@@ -102,6 +103,7 @@ const MOCK_STAFF_FALLBACK: StaffMember[] = [
 const ROLES = ["All", "Head Chef", "Sous Chef", "Server", "Event Coordinator"];
 
 export default function StaffPage() {
+  const router = useRouter();
   const [staff, setStaff] = useState<StaffMember[]>(MOCK_STAFF_FALLBACK);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -367,7 +369,10 @@ export default function StaffPage() {
                     <Edit className="h-4 w-4 mr-1" />
                     Edit
                   </button>
-                  <button className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                  <button
+                    onClick={() => router.push(`/schedule?staff=${member.id}`)}
+                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  >
                     <Calendar className="h-4 w-4 mr-1" />
                     Schedule
                   </button>
