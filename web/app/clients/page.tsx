@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
+import { getClients } from "@/lib/supabase-services";
 import {
   Plus,
   Search,
@@ -28,7 +29,8 @@ interface Client {
   notes: string;
 }
 
-const MOCK_CLIENTS: Client[] = [
+// Removed mock data - now fetching from Supabase
+const MOCK_CLIENTS_FALLBACK: Client[] = [
   {
     id: "1",
     name: "Acme Corporation",
@@ -82,9 +84,38 @@ const MOCK_CLIENTS: Client[] = [
 ];
 
 export default function ClientsPage() {
-  const [clients] = useState<Client[]>(MOCK_CLIENTS);
+  const [clients, setClients] = useState<Client[]>(MOCK_CLIENTS_FALLBACK);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
+
+  useEffect(() => {
+    async function loadClients() {
+      try {
+        const data = await getClients();
+        // Map Supabase data to Client interface
+        const mappedClients = data.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          type: c.client_type === "corporate" ? "Corporate" : c.client_type === "individual" ? "Private" : "Wedding",
+          email: c.email || "",
+          phone: c.phone || "",
+          company: c.company,
+          totalEvents: c.total_events || 0,
+          lifetimeValue: parseFloat(c.lifetime_value) || 0,
+          lastEvent: new Date(), // TODO: get from client_events table
+          satisfaction: c.satisfaction_rating || 0,
+          notes: c.notes || "",
+        }));
+        setClients(mappedClients);
+      } catch (error) {
+        console.error("Error loading clients:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadClients();
+  }, []);
 
   const filteredClients = clients.filter((client) => {
     const matchesSearch =

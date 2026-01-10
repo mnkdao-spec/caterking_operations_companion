@@ -42,11 +42,32 @@ export async function getMenuItems() {
   return data || [];
 }
 
-// Clients (from events, we'll need to create a clients table)
+// Clients
 export async function getClients() {
-  // For now, return empty array until we create a proper clients table
-  // TODO: Create clients table in migration
-  return [];
+  const { data, error } = await supabase
+    .from("clients")
+    .select("*")
+    .order("name", { ascending: true });
+  
+  if (error) {
+    console.error("Error fetching clients:", error);
+    return [];
+  }
+  return data || [];
+}
+
+export async function getClientById(id: string) {
+  const { data, error } = await supabase
+    .from("clients")
+    .select("*")
+    .eq("id", id)
+    .single();
+  
+  if (error) {
+    console.error("Error fetching client:", error);
+    return null;
+  }
+  return data;
 }
 
 // Inventory
@@ -110,10 +131,57 @@ export async function getLowStockAlerts() {
   return data || [];
 }
 
-// Staff (we'll need to create a staff table)
+// Staff
 export async function getStaff() {
-  // TODO: Create staff table in migration
-  return [];
+  const { data, error } = await supabase
+    .from("staff")
+    .select("*")
+    .order("last_name", { ascending: true });
+  
+  if (error) {
+    console.error("Error fetching staff:", error);
+    return [];
+  }
+  return data || [];
+}
+
+export async function getStaffById(id: string) {
+  const { data, error } = await supabase
+    .from("staff")
+    .select("*")
+    .eq("id", id)
+    .single();
+  
+  if (error) {
+    console.error("Error fetching staff:", error);
+    return null;
+  }
+  return data;
+}
+
+export async function getStaffAssignments(staffId?: string) {
+  let query = supabase
+    .from("staff_assignments")
+    .select(`
+      *,
+      staff:staff (
+        first_name,
+        last_name,
+        role
+      )
+    `);
+  
+  if (staffId) {
+    query = query.eq("staff_id", staffId);
+  }
+  
+  const { data, error } = await query;
+  
+  if (error) {
+    console.error("Error fetching staff assignments:", error);
+    return [];
+  }
+  return data || [];
 }
 
 // Dashboard Stats
@@ -137,10 +205,16 @@ export async function getDashboardStats() {
     .select("*", { count: "exact", head: true })
     .eq("resolved", false);
   
+  // Get total clients count
+  const { count: clientsCount } = await supabase
+    .from("clients")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "active");
+  
   return {
     totalRevenue: totalGuests * 50, // Rough estimate
     activeEvents: activeEventsCount || 0,
-    totalClients: 0, // TODO: implement when clients table exists
+    totalClients: clientsCount || 0,
     inventoryAlerts: lowStockCount || 0,
   };
 }

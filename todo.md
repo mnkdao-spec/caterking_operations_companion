@@ -115,3 +115,14 @@
   - [x] Replace Staff mock data with Supabase queries (TODO: create dedicated staff table)
   - [x] Add real-time subscriptions for live updates
   - [x] Test end-to-end data flow between mobile and web
+
+
+## Clients & Staff Tables
+
+- [x] Create database migration for clients table
+- [x] Create database migration for staff table
+- [x] Update Supabase services with clients queries
+- [x] Update Supabase services with staff queries
+- [x] Update Clients page to use real Supabase data
+- [x] Update Staff page to use real Supabase data
+- [x] Test data flow for clients and staff

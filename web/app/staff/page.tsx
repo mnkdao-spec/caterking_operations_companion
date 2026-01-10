@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
+import { getStaff } from "@/lib/supabase-services";
 import {
   Plus,
   Search,
@@ -28,7 +29,8 @@ interface StaffMember {
   status: "active" | "inactive";
 }
 
-const MOCK_STAFF: StaffMember[] = [
+// Removed mock data - now fetching from Supabase
+const MOCK_STAFF_FALLBACK: StaffMember[] = [
   {
     id: "1",
     name: "Sarah Johnson",
@@ -99,9 +101,38 @@ const MOCK_STAFF: StaffMember[] = [
 const ROLES = ["All", "Head Chef", "Sous Chef", "Server", "Event Coordinator"];
 
 export default function StaffPage() {
-  const [staff] = useState<StaffMember[]>(MOCK_STAFF);
+  const [staff, setStaff] = useState<StaffMember[]>(MOCK_STAFF_FALLBACK);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState("All");
+
+  useEffect(() => {
+    async function loadStaff() {
+      try {
+        const data = await getStaff();
+        // Map Supabase data to StaffMember interface
+        const mappedStaff = data.map((s: any) => ({
+          id: s.id,
+          name: `${s.first_name} ${s.last_name}`,
+          role: s.role,
+          email: s.email || "",
+          phone: s.phone || "",
+          hireDate: s.hire_date ? new Date(s.hire_date) : new Date(),
+          hourlyRate: parseFloat(s.hourly_rate) || 0,
+          hoursThisMonth: parseFloat(s.total_hours_worked) || 0,
+          eventsThisMonth: s.total_events_worked || 0,
+          rating: parseFloat(s.performance_rating) || 0,
+          status: s.status === "active" ? "active" : "inactive",
+        }));
+        setStaff(mappedStaff);
+      } catch (error) {
+        console.error("Error loading staff:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadStaff();
+  }, []);
 
   const filteredStaff = staff.filter((member) => {
     const matchesSearch =
