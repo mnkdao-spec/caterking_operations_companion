@@ -126,3 +126,15 @@
 - [x] Update Clients page to use real Supabase data
 - [x] Update Staff page to use real Supabase data
 - [x] Test data flow for clients and staff
+
+
+## CRUD Forms & Modals
+
+- [x] Create reusable Modal component
+- [x] Create form validation utilities
+- [x] Add Supabase insert/update/delete functions
+- [x] Build Client create/edit form
+- [ ] Build Staff create/edit form
+- [ ] Build Event create/edit form
+- [ ] Build Menu Item create/edit form
+- [ ] Test all CRUD operations

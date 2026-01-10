@@ -249,3 +249,174 @@ export function subscribeToInventory(callback: (payload: any) => void) {
     supabase.removeChannel(channel);
   };
 }
+
+
+// ========== CREATE/UPDATE/DELETE OPERATIONS ==========
+
+// Clients CRUD
+export async function createClient(clientData: any) {
+  const { data, error } = await supabase
+    .from("clients")
+    .insert([clientData])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error("Error creating client:", error);
+    throw error;
+  }
+  return data;
+}
+
+export async function updateClient(id: string, clientData: any) {
+  const { data, error } = await supabase
+    .from("clients")
+    .update(clientData)
+    .eq("id", id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error("Error updating client:", error);
+    throw error;
+  }
+  return data;
+}
+
+export async function deleteClient(id: string) {
+  const { error } = await supabase
+    .from("clients")
+    .delete()
+    .eq("id", id);
+  
+  if (error) {
+    console.error("Error deleting client:", error);
+    throw error;
+  }
+}
+
+// Staff CRUD
+export async function createStaff(staffData: any) {
+  const { data, error } = await supabase
+    .from("staff")
+    .insert([staffData])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error("Error creating staff:", error);
+    throw error;
+  }
+  return data;
+}
+
+export async function updateStaff(id: string, staffData: any) {
+  const { data, error } = await supabase
+    .from("staff")
+    .update(staffData)
+    .eq("id", id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error("Error updating staff:", error);
+    throw error;
+  }
+  return data;
+}
+
+export async function deleteStaff(id: string) {
+  const { error } = await supabase
+    .from("staff")
+    .delete()
+    .eq("id", id);
+  
+  if (error) {
+    console.error("Error deleting staff:", error);
+    throw error;
+  }
+}
+
+// Events CRUD
+export async function createEvent(eventData: any) {
+  const { data, error } = await supabase
+    .from("kds_events")
+    .insert([eventData])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error("Error creating event:", error);
+    throw error;
+  }
+  return data;
+}
+
+export async function updateEvent(id: string, eventData: any) {
+  const { data, error } = await supabase
+    .from("kds_events")
+    .update(eventData)
+    .eq("id", id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error("Error updating event:", error);
+    throw error;
+  }
+  return data;
+}
+
+export async function deleteEvent(id: string) {
+  const { error } = await supabase
+    .from("kds_events")
+    .delete()
+    .eq("id", id);
+  
+  if (error) {
+    console.error("Error deleting event:", error);
+    throw error;
+  }
+}
+
+// Menu Items CRUD
+export async function createMenuItem(menuData: any) {
+  const { data, error } = await supabase
+    .from("kds_menu_items")
+    .insert([menuData])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error("Error creating menu item:", error);
+    throw error;
+  }
+  return data;
+}
+
+export async function updateMenuItem(id: string, menuData: any) {
+  const { data, error } = await supabase
+    .from("kds_menu_items")
+    .update(menuData)
+    .eq("id", id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error("Error updating menu item:", error);
+    throw error;
+  }
+  return data;
+}
+
+export async function deleteMenuItem(id: string) {
+  const { error } = await supabase
+    .from("kds_menu_items")
+    .delete()
+    .eq("id", id);
+  
+  if (error) {
+    console.error("Error deleting menu item:", error);
+    throw error;
+  }
+}

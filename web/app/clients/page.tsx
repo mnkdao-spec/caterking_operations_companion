@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
 import { getClients } from "@/lib/supabase-services";
+import { ClientForm } from "@/components/client-form";
 import {
   Plus,
   Search,
@@ -88,10 +89,11 @@ export default function ClientsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<any>(null);
 
-  useEffect(() => {
-    async function loadClients() {
-      try {
+  const loadClients = async () => {
+    try {
         const data = await getClients();
         // Map Supabase data to Client interface
         const mappedClients = data.map((c: any) => ({
@@ -110,12 +112,32 @@ export default function ClientsPage() {
         setClients(mappedClients);
       } catch (error) {
         console.error("Error loading clients:", error);
-      } finally {
-        setLoading(false);
-      }
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadClients();
   }, []);
+
+  const handleFormSuccess = () => {
+    loadClients(); // Reload clients after create/update
+  };
+
+  const handleEditClient = (client: Client) => {
+    // Map Client to database format
+    setEditingClient({
+      id: client.id,
+      name: client.name,
+      email: client.email,
+      phone: client.phone,
+      company: client.company,
+      client_type: client.type === "Corporate" ? "corporate" : client.type === "Private" ? "individual" : "individual",
+      notes: client.notes,
+    });
+    setIsFormOpen(true);
+  };
 
   const filteredClients = clients.filter((client) => {
     const matchesSearch =
@@ -156,7 +178,12 @@ export default function ClientsPage() {
               Manage your client relationships and history
             </p>
           </div>
-          <button className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700">
+          <button
+            onClick={() => {
+              setEditingClient(null);
+              setIsFormOpen(true);
+            }}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700">
             <Plus className="h-5 w-5 mr-2" />
             New Client
           </button>
@@ -300,6 +327,17 @@ export default function ClientsPage() {
           </div>
         )}
       </main>
+
+      {/* Client Form Modal */}
+      <ClientForm
+        isOpen={isFormOpen}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingClient(null);
+        }}
+        onSuccess={handleFormSuccess}
+        client={editingClient}
+      />
     </div>
   );
 }
