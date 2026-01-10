@@ -18,7 +18,7 @@ export function MenuItemForm({ isOpen, onClose, onSuccess, menuItem }: MenuItemF
     prep_time_minutes: menuItem?.prep_time_minutes || "",
     cost_per_serving: menuItem?.cost_per_serving || "",
     price_per_serving: menuItem?.price_per_serving || "",
-    min_order_quantity: menuItem?.min_order_quantity || "1",
+    minimum_order_quantity: menuItem?.minimum_order_quantity || "1",
     is_available: menuItem?.is_available ?? true,
   });
   const [loading, setLoading] = useState(false);
@@ -35,7 +35,7 @@ export function MenuItemForm({ isOpen, onClose, onSuccess, menuItem }: MenuItemF
         prep_time_minutes: formData.prep_time_minutes ? parseInt(formData.prep_time_minutes as string) : null,
         cost_per_serving: formData.cost_per_serving ? parseFloat(formData.cost_per_serving as string) : null,
         price_per_serving: formData.price_per_serving ? parseFloat(formData.price_per_serving as string) : null,
-        min_order_quantity: formData.min_order_quantity ? parseInt(formData.min_order_quantity as string) : 1,
+        minimum_order_quantity: formData.minimum_order_quantity ? parseInt(formData.minimum_order_quantity as string) : 1,
       };
 
       if (menuItem) {
@@ -198,8 +198,8 @@ export function MenuItemForm({ isOpen, onClose, onSuccess, menuItem }: MenuItemF
             <input
               type="number"
               min="1"
-              value={formData.min_order_quantity}
-              onChange={(e) => setFormData({ ...formData, min_order_quantity: e.target.value })}
+              value={formData.minimum_order_quantity}
+              onChange={(e) => setFormData({ ...formData, minimum_order_quantity: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             />
           </div>

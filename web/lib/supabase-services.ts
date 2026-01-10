@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 // Events
 export async function getEvents() {
   const { data, error } = await supabase
-    .from("kds_events")
+    .from("events")
     .select("*")
     .order("event_date", { ascending: true });
   
@@ -16,7 +16,7 @@ export async function getEvents() {
 
 export async function getEventById(id: string) {
   const { data, error } = await supabase
-    .from("kds_events")
+    .from("events")
     .select("*")
     .eq("id", id)
     .single();
@@ -31,7 +31,7 @@ export async function getEventById(id: string) {
 // Menu Items
 export async function getMenuItems() {
   const { data, error } = await supabase
-    .from("kds_menu_items")
+    .from("menu_items")
     .select("*")
     .order("name", { ascending: true });
   
@@ -188,14 +188,14 @@ export async function getStaffAssignments(staffId?: string) {
 export async function getDashboardStats() {
   // Get total revenue from events
   const { data: events } = await supabase
-    .from("kds_events")
+    .from("events")
     .select("total_guests");
   
   const totalGuests = events?.reduce((sum, e) => sum + (e.total_guests || 0), 0) || 0;
   
   // Get active events count
   const { count: activeEventsCount } = await supabase
-    .from("kds_events")
+    .from("events")
     .select("*", { count: "exact", head: true })
     .gte("event_date", new Date().toISOString());
   
@@ -225,7 +225,7 @@ export function subscribeToEvents(callback: (payload: any) => void) {
     .channel("events-changes")
     .on(
       "postgres_changes",
-      { event: "*", schema: "public", table: "kds_events" },
+      { event: "*", schema: "public", table: "events" },
       callback
     )
     .subscribe();
@@ -340,7 +340,7 @@ export async function deleteStaff(id: string) {
 // Events CRUD
 export async function createEvent(eventData: any) {
   const { data, error } = await supabase
-    .from("kds_events")
+    .from("events")
     .insert([eventData])
     .select()
     .single();
@@ -354,7 +354,7 @@ export async function createEvent(eventData: any) {
 
 export async function updateEvent(id: string, eventData: any) {
   const { data, error } = await supabase
-    .from("kds_events")
+    .from("events")
     .update(eventData)
     .eq("id", id)
     .select()
@@ -369,7 +369,7 @@ export async function updateEvent(id: string, eventData: any) {
 
 export async function deleteEvent(id: string) {
   const { error } = await supabase
-    .from("kds_events")
+    .from("events")
     .delete()
     .eq("id", id);
   
@@ -382,7 +382,7 @@ export async function deleteEvent(id: string) {
 // Menu Items CRUD
 export async function createMenuItem(menuData: any) {
   const { data, error } = await supabase
-    .from("kds_menu_items")
+    .from("menu_items")
     .insert([menuData])
     .select()
     .single();
@@ -396,7 +396,7 @@ export async function createMenuItem(menuData: any) {
 
 export async function updateMenuItem(id: string, menuData: any) {
   const { data, error } = await supabase
-    .from("kds_menu_items")
+    .from("menu_items")
     .update(menuData)
     .eq("id", id)
     .select()
@@ -411,7 +411,7 @@ export async function updateMenuItem(id: string, menuData: any) {
 
 export async function deleteMenuItem(id: string) {
   const { error } = await supabase
-    .from("kds_menu_items")
+    .from("menu_items")
     .delete()
     .eq("id", id);
   

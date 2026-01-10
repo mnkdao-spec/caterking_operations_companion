@@ -115,12 +115,12 @@ export default function EventsPage() {
         const mappedEvents = data.map((e: any) => ({
           id: e.id,
           title: e.event_name || "Untitled Event",
-          client: e.client_name || "Unknown Client",
+          client: e.client || "Unknown Client",
           date: new Date(e.event_date),
           time: e.event_time || "TBD",
-          venue: e.venue || "TBD",
-          guestCount: e.total_guests || 0,
-          budget: e.total_guests * 50 || 0, // Estimate
+          venue: e.venue_name || e.venue || "TBD",
+          guestCount: e.guest_count || 0,
+          budget: e.budget || 0,
           status: (e.status || "lead") as EventStatus,
           type: e.event_type || "Private",
         }));
