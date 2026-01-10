@@ -191,7 +191,7 @@ export async function getDashboardStats() {
     .from("events")
     .select("total_guests");
   
-  const totalGuests = events?.reduce((sum, e) => sum + (e.total_guests || 0), 0) || 0;
+  const totalGuests = events?.reduce((sum: number, e: any) => sum + (e.total_guests || 0), 0) || 0;
   
   // Get active events count
   const { count: activeEventsCount } = await supabase

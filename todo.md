@@ -186,3 +186,12 @@
 - [x] Add assignment CRUD operations (create, update, delete)
 - [x] Display assigned hours and pay calculations
 - [ ] Test scheduling functionality end-to-end
+
+
+## Web ERP Server Fixes
+
+- [x] Fix TypeScript implicit 'any' type errors in supabase-services.ts
+- [x] Resolve port conflicts (multiple Next.js servers running)
+- [x] Restart web ERP server on clean port
+- [x] Test all web ERP pages load correctly
+- [x] Test staff scheduling calendar functionality
