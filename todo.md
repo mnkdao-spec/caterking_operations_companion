@@ -181,8 +181,11 @@
 - [x] Create calendar UI component with weekly view
 - [x] Build scheduling page with event list and staff roster
 - [ ] Implement drag-and-drop staff assignment
-- [ ] Add staff availability tracking
-- [ ] Implement conflict detection (double-booking, overlapping shifts)
+- [ ] Create staff_availability table for time-off and unavailable periods
+- [ ] Implement conflict detection logic (check overlapping event times)
+- [ ] Add visual conflict warnings in scheduling UI
+- [ ] Prevent assignment submission when conflicts detected
+- [ ] Add conflict resolution suggestions
 - [x] Add assignment CRUD operations (create, update, delete)
 - [x] Display assigned hours and pay calculations
 - [ ] Test scheduling functionality end-to-end
@@ -195,3 +198,12 @@
 - [x] Restart web ERP server on clean port
 - [x] Test all web ERP pages load correctly
 - [x] Test staff scheduling calendar functionality
+
+
+## Edit Functionality for All ERP Pages
+
+- [x] Add edit button to Events page with update functionality
+- [x] Add edit button to Clients page with update functionality
+- [x] Add edit button to Staff page with update functionality
+- [x] Add edit button to Menus page with update functionality
+- [ ] Test editing records across all pages

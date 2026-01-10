@@ -241,7 +241,13 @@ export default function MenusPage() {
 
                 {/* Actions */}
                 <div className="border-t border-gray-200 pt-3 mt-3 flex gap-2">
-                  <button className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                  <button
+                    onClick={() => {
+                      setEditingItem(item);
+                      setIsFormOpen(true);
+                    }}
+                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  >
                     <Edit className="h-4 w-4 mr-1" />
                     Edit
                   </button>

@@ -13,6 +13,7 @@ import {
   Users,
   DollarSign,
   Clock,
+  Edit,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -235,7 +236,7 @@ export default function EventsPage() {
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200">
               {filteredEvents.map((event) => (
-                <li key={event.id} className="hover:bg-gray-50 cursor-pointer">
+                <li key={event.id} className="hover:bg-gray-50">
                   <div className="px-4 py-4 sm:px-6">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
@@ -285,6 +286,16 @@ export default function EventsPage() {
                           </span>
                         </div>
                       </div>
+                      <button
+                        onClick={() => {
+                          setEditingEvent(event);
+                          setIsFormOpen(true);
+                        }}
+                        className="ml-4 p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                        title="Edit event"
+                      >
+                        <Edit className="h-5 w-5" />
+                      </button>
                     </div>
                   </div>
                 </li>

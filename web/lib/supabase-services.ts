@@ -476,3 +476,80 @@ export async function deleteStaffAssignment(id: string) {
     throw error;
   }
 }
+
+
+// ============================================================================
+// STAFF AVAILABILITY & CONFLICT DETECTION
+// ============================================================================
+
+export interface StaffConflict {
+  conflict_type: 'availability' | 'double_booking';
+  conflict_start: string;
+  conflict_end: string;
+  conflict_details: string;
+}
+
+export async function checkStaffConflicts(
+  staffId: string,
+  startTime: string,
+  endTime: string
+): Promise<StaffConflict[]> {
+  const { data, error } = await supabase.rpc('check_staff_conflicts', {
+    p_staff_id: staffId,
+    p_start_time: startTime,
+    p_end_time: endTime
+  });
+  
+  if (error) {
+    console.error("Error checking staff conflicts:", error);
+    return [];
+  }
+  
+  return data || [];
+}
+
+export async function createStaffAvailability(availability: {
+  staff_id: string;
+  start_time: string;
+  end_time: string;
+  reason: 'time_off' | 'sick_day' | 'personal' | 'conflict' | 'other';
+  notes?: string;
+}) {
+  const { data, error } = await supabase
+    .from("staff_availability")
+    .insert([availability])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error("Error creating staff availability:", error);
+    throw error;
+  }
+  return data;
+}
+
+export async function getStaffAvailability(staffId: string) {
+  const { data, error } = await supabase
+    .from("staff_availability")
+    .select("*")
+    .eq("staff_id", staffId)
+    .order("start_time", { ascending: true });
+  
+  if (error) {
+    console.error("Error fetching staff availability:", error);
+    return [];
+  }
+  return data || [];
+}
+
+export async function deleteStaffAvailability(id: string) {
+  const { error } = await supabase
+    .from("staff_availability")
+    .delete()
+    .eq("id", id);
+  
+  if (error) {
+    console.error("Error deleting staff availability:", error);
+    throw error;
+  }
+}

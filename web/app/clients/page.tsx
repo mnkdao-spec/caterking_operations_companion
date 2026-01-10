@@ -14,6 +14,7 @@ import {
   Calendar,
   Star,
   MessageSquare,
+  Edit,
 } from "lucide-react";
 
 interface Client {
@@ -298,6 +299,16 @@ export default function ClientsPage() {
 
                 {/* Actions */}
                 <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => {
+                      setEditingClient(client);
+                      setIsFormOpen(true);
+                    }}
+                    className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </button>
                   <button className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                     <Mail className="h-4 w-4 mr-1" />
                     Email

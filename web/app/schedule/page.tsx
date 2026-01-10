@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/dashboard-layout";
-import { getEvents, getStaff, getStaffAssignments, createStaffAssignment, deleteStaffAssignment } from "@/lib/supabase-services";
+import { getEvents, getStaff, getStaffAssignments, createStaffAssignment, deleteStaffAssignment, checkStaffConflicts, type StaffConflict } from "@/lib/supabase-services";
 import { Calendar, Users, Clock, DollarSign, Plus, X, AlertCircle } from "lucide-react";
 
 interface Event {
@@ -46,6 +46,8 @@ export default function SchedulePage() {
   const [selectedStaff, setSelectedStaff] = useState<string>("");
   const [assignmentRole, setAssignmentRole] = useState<string>("");
   const [estimatedHours, setEstimatedHours] = useState<string>("8");
+  const [conflicts, setConflicts] = useState<StaffConflict[]>([]);
+  const [checkingConflicts, setCheckingConflicts] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -97,10 +99,52 @@ export default function SchedulePage() {
     return staffMember?.hourly_rate || 0;
   }
 
+  async function checkForConflicts() {
+    if (!selectedEvent || !selectedStaff) {
+      setConflicts([]);
+      return;
+    }
+
+    setCheckingConflicts(true);
+    try {
+      const hours = parseFloat(estimatedHours) || 8;
+      const eventStart = new Date(`${selectedEvent.event_date}T${selectedEvent.event_time}`);
+      const eventEnd = new Date(eventStart.getTime() + hours * 60 * 60 * 1000);
+
+      const conflictData = await checkStaffConflicts(
+        selectedStaff,
+        eventStart.toISOString(),
+        eventEnd.toISOString()
+      );
+
+      setConflicts(conflictData);
+    } catch (error) {
+      console.error("Error checking conflicts:", error);
+      setConflicts([]);
+    } finally {
+      setCheckingConflicts(false);
+    }
+  }
+
+  useEffect(() => {
+    checkForConflicts();
+  }, [selectedStaff, selectedEvent, estimatedHours]);
+
   async function handleAssignStaff() {
     if (!selectedEvent || !selectedStaff || !assignmentRole) {
       alert("Please select staff and specify role");
       return;
+    }
+
+    // Prevent assignment if there are conflicts
+    if (conflicts.length > 0) {
+      const confirmAssign = confirm(
+        `WARNING: This staff member has ${conflicts.length} conflict(s). Do you want to proceed anyway?\n\n` +
+        conflicts.map(c => `- ${c.conflict_type}: ${c.conflict_details}`).join('\n')
+      );
+      if (!confirmAssign) {
+        return;
+      }
     }
 
     const hours = parseFloat(estimatedHours) || 8;
@@ -121,6 +165,7 @@ export default function SchedulePage() {
       setSelectedStaff("");
       setAssignmentRole("");
       setEstimatedHours("8");
+      setConflicts([]);
     } catch (error) {
       console.error("Error assigning staff:", error);
       alert("Failed to assign staff");
@@ -369,6 +414,53 @@ export default function SchedulePage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+
+              {/* Conflict Warnings */}
+              {checkingConflicts && selectedStaff && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-blue-700">
+                    <AlertCircle className="h-5 w-5 animate-pulse" />
+                    <span className="text-sm font-medium">Checking for conflicts...</span>
+                  </div>
+                </div>
+              )}
+
+              {!checkingConflicts && conflicts.length > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-red-900 mb-2">
+                        {conflicts.length} Conflict{conflicts.length > 1 ? 's' : ''} Detected
+                      </h4>
+                      <ul className="space-y-2">
+                        {conflicts.map((conflict, idx) => (
+                          <li key={idx} className="text-sm text-red-700">
+                            <span className="font-medium capitalize">
+                              {conflict.conflict_type.replace('_', ' ')}:
+                            </span>{' '}
+                            {conflict.conflict_details}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-xs text-red-600 mt-2">
+                        ⚠️ You can still assign this staff member, but conflicts should be resolved.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!checkingConflicts && conflicts.length === 0 && selectedStaff && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-green-700">
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-sm font-medium">No conflicts - available for this event</span>
+                  </div>
+                </div>
+              )}
 
               {/* Pay Calculation */}
               {selectedStaff && (
