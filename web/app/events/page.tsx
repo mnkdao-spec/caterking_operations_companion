@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
 import { getEvents } from "@/lib/supabase-services";
+import { useRealtimeSubscriptions } from "@/hooks/use-realtime-subscription";
 import { EventForm } from "@/components/event-form";
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog";
 import { deleteEvent } from "@/lib/supabase-services";
@@ -141,6 +142,16 @@ export default function EventsPage() {
   useEffect(() => {
     loadEvents();
   }, []);
+
+  // Real-time subscriptions
+  useRealtimeSubscriptions([
+    {
+      table: "kds_events",
+      onInsert: () => loadEvents(),
+      onUpdate: () => loadEvents(),
+      onDelete: () => loadEvents(),
+    },
+  ]);
 
   const handleFormSuccess = () => {
     loadEvents();

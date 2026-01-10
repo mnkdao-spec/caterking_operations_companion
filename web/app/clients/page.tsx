@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
 import { getClients } from "@/lib/supabase-services";
+import { useRealtimeSubscriptions } from "@/hooks/use-realtime-subscription";
 import { ClientForm } from "@/components/client-form";
 import {
   Plus,
@@ -120,6 +121,16 @@ export default function ClientsPage() {
   useEffect(() => {
     loadClients();
   }, []);
+
+  // Real-time subscriptions
+  useRealtimeSubscriptions([
+    {
+      table: "clients",
+      onInsert: () => loadClients(),
+      onUpdate: () => loadClients(),
+      onDelete: () => loadClients(),
+    },
+  ]);
 
   const handleFormSuccess = () => {
     loadClients(); // Reload clients after create/update

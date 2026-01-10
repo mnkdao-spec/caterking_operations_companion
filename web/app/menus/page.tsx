@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
+import { getMenuItems } from "@/lib/supabase-services";
+import { useRealtimeSubscriptions } from "@/hooks/use-realtime-subscription";
 import { MenuItemForm } from "@/components/menu-item-form";
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog";
 import { deleteMenuItem } from "@/lib/supabase-services";
@@ -91,7 +93,8 @@ const DIETARY_ICONS: Record<string, JSX.Element> = {
 };
 
 export default function MenusPage() {
-  const [menuItems] = useState<MenuItem[]>(MOCK_MENU_ITEMS);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(MOCK_MENU_ITEMS);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -100,9 +103,33 @@ export default function MenusPage() {
   const [itemToDelete, setItemToDelete] = useState<any>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  const loadMenuItems = async () => {
+    try {
+      const data = await getMenuItems();
+      setMenuItems(data);
+    } catch (error) {
+      console.error("Error loading menu items:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMenuItems();
+  }, []);
+
+  // Real-time subscriptions
+  useRealtimeSubscriptions([
+    {
+      table: "kds_menu_items",
+      onInsert: () => loadMenuItems(),
+      onUpdate: () => loadMenuItems(),
+      onDelete: () => loadMenuItems(),
+    },
+  ]);
+
   const handleFormSuccess = () => {
-    // Reload menu items - for now just close the form
-    // TODO: Implement actual data reload from Supabase
+    loadMenuItems();
   };
 
   const handleDelete = async () => {
@@ -112,7 +139,7 @@ export default function MenusPage() {
       await deleteMenuItem(itemToDelete.id);
       setDeleteDialogOpen(false);
       setItemToDelete(null);
-      // TODO: Reload menu items from Supabase
+      loadMenuItems();
     } catch (error) {
       console.error("Error deleting menu item:", error);
       alert("Failed to delete menu item");

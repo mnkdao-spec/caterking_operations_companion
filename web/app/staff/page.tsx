@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
 import { getStaff } from "@/lib/supabase-services";
+import { useRealtimeSubscriptions } from "@/hooks/use-realtime-subscription";
 import { StaffForm } from "@/components/staff-form";
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog";
 import { deleteStaff } from "@/lib/supabase-services";
@@ -143,6 +144,16 @@ export default function StaffPage() {
   useEffect(() => {
     loadStaff();
   }, []);
+
+  // Real-time subscriptions
+  useRealtimeSubscriptions([
+    {
+      table: "staff",
+      onInsert: () => loadStaff(),
+      onUpdate: () => loadStaff(),
+      onDelete: () => loadStaff(),
+    },
+  ]);
 
   const handleFormSuccess = () => {
     loadStaff();

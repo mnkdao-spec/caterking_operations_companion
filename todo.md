@@ -154,3 +154,15 @@
 - [x] Add client dropdown to Event form
 - [x] Create client_id relationship in kds_events table
 - [x] Test Event-Client linking end-to-end
+
+
+## Real-Time WebSocket Subscriptions
+
+- [x] Create reusable real-time subscription hooks
+- [x] Add real-time subscriptions to Dashboard page
+- [x] Add real-time subscriptions to Events page
+- [x] Add real-time subscriptions to Clients page
+- [x] Add real-time subscriptions to Staff page
+- [x] Add real-time subscriptions to Menus/Inventory page
+- [ ] Test multi-browser real-time updates
+- [ ] Add connection status indicator

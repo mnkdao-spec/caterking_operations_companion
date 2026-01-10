@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Navigation } from "@/components/navigation";
 import { getDashboardStats } from "@/lib/supabase-services";
+import { useRealtimeSubscriptions } from "@/hooks/use-realtime-subscription";
 import {
   DollarSign,
   Calendar,
@@ -56,19 +57,42 @@ export default function DashboardPage() {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadStats() {
-      try {
-        const data = await getDashboardStats();
-        setStats(data);
-      } catch (error) {
-        console.error("Error loading dashboard stats:", error);
-      } finally {
-        setLoading(false);
-      }
+  const loadStats = async () => {
+    try {
+      const data = await getDashboardStats();
+      setStats(data);
+    } catch (error) {
+      console.error("Error loading stats:", error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadStats();
   }, []);
+
+  // Real-time subscriptions
+  useRealtimeSubscriptions([
+    {
+      table: "kds_events",
+      onInsert: () => loadStats(),
+      onUpdate: () => loadStats(),
+      onDelete: () => loadStats(),
+    },
+    {
+      table: "clients",
+      onInsert: () => loadStats(),
+      onUpdate: () => loadStats(),
+      onDelete: () => loadStats(),
+    },
+    {
+      table: "inventory_stock_levels",
+      onInsert: () => loadStats(),
+      onUpdate: () => loadStats(),
+      onDelete: () => loadStats(),
+    },
+  ]);
 
   if (loading) {
     return (
