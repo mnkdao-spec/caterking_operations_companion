@@ -420,3 +420,59 @@ export async function deleteMenuItem(id: string) {
     throw error;
   }
 }
+
+
+export async function createStaffAssignment(assignment: {
+  staff_id: string;
+  event_id: string;
+  role: string;
+  hours_worked?: number;
+  pay_amount?: number;
+  notes?: string;
+}) {
+  const { data, error } = await supabase
+    .from("staff_assignments")
+    .insert([assignment])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error("Error creating staff assignment:", error);
+    throw error;
+  }
+  return data;
+}
+
+export async function updateStaffAssignment(id: string, updates: {
+  role?: string;
+  hours_worked?: number;
+  pay_amount?: number;
+  check_in_time?: string;
+  check_out_time?: string;
+  notes?: string;
+}) {
+  const { data, error } = await supabase
+    .from("staff_assignments")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error("Error updating staff assignment:", error);
+    throw error;
+  }
+  return data;
+}
+
+export async function deleteStaffAssignment(id: string) {
+  const { error } = await supabase
+    .from("staff_assignments")
+    .delete()
+    .eq("id", id);
+  
+  if (error) {
+    console.error("Error deleting staff assignment:", error);
+    throw error;
+  }
+}

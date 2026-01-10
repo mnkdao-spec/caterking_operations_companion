@@ -10,12 +10,14 @@ import {
   Package,
   FileText,
   UserCog,
+  CalendarClock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Events", href: "/events", icon: Calendar },
+  { name: "Schedule", href: "/schedule", icon: CalendarClock },
   { name: "Menus", href: "/menus", icon: UtensilsCrossed },
   { name: "Clients", href: "/clients", icon: Users },
   { name: "Inventory", href: "/inventory", icon: Package },

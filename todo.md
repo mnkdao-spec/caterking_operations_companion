@@ -173,3 +173,16 @@
   - [ ] Conduct team workshop on new standards
   - [ ] Create developer onboarding guide
   - [ ] Establish documentation maintenance process
+
+
+## Staff Scheduling Calendar
+
+- [x] Review staff_assignments table schema
+- [x] Create calendar UI component with weekly view
+- [x] Build scheduling page with event list and staff roster
+- [ ] Implement drag-and-drop staff assignment
+- [ ] Add staff availability tracking
+- [ ] Implement conflict detection (double-booking, overlapping shifts)
+- [x] Add assignment CRUD operations (create, update, delete)
+- [x] Display assigned hours and pay calculations
+- [ ] Test scheduling functionality end-to-end
