@@ -71,7 +71,7 @@ export async function generateInvoicePDF(
   // Line items table header
   doc.setFontSize(10);
   doc.setTextColor(0, 0, 0);
-  doc.setFont(undefined, "bold");
+  doc.setFont("helvetica", "bold");
 
   const colX = {
     description: 20,
@@ -92,7 +92,7 @@ export async function generateInvoicePDF(
   yPosition += 5;
 
   // Line items
-  doc.setFont(undefined, "normal");
+  doc.setFont("helvetica", "normal");
   doc.setTextColor(50, 50, 50);
   doc.setFontSize(9);
 
@@ -126,7 +126,7 @@ export async function generateInvoicePDF(
   yPosition += 6;
 
   // Total - highlighted
-  doc.setFont(undefined, "bold");
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.setTextColor(217, 119, 6);
   doc.text("Total Amount:", totalX, yPosition, { align: "left" });
@@ -134,7 +134,7 @@ export async function generateInvoicePDF(
   yPosition += 10;
 
   // Status
-  doc.setFont(undefined, "normal");
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(100, 100, 100);
   doc.text(`Status: ${invoice.status.toUpperCase()}`, 20, yPosition, { align: "left" });

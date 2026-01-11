@@ -570,6 +570,37 @@ export async function deleteStaffAvailability(id: string) {
 }
 
 
+// Invoices
+export interface Invoice {
+  id: string;
+  client_id: string;
+  client_name: string;
+  client_email?: string;
+  client_phone?: string;
+  invoice_number: string;
+  invoice_date: string;
+  due_date: string;
+  subtotal: number;
+  tax_amount: number;
+  total_amount: number;
+  labor_costs_total: number;
+  status: 'draft' | 'sent' | 'paid' | 'overdue';
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InvoiceItem {
+  id: string;
+  invoice_id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  created_at: string;
+  updated_at: string;
+}
+
 // Recurring Invoice Templates
 export interface InvoiceTemplate {
   id: string;
