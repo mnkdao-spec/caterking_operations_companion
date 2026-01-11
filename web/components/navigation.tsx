@@ -12,6 +12,7 @@ import {
   UserCog,
   CalendarClock,
   Receipt,
+  ReceiptText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ const navigation = [
   { name: "Clients", href: "/clients", icon: Users },
   { name: "Inventory", href: "/inventory", icon: Package },
   { name: "Invoices", href: "/invoices", icon: Receipt },
+  { name: "Templates", href: "/invoice-templates", icon: ReceiptText },
   { name: "Reports", href: "/reports", icon: FileText },
   { name: "Staff", href: "/staff", icon: UserCog },
 ];

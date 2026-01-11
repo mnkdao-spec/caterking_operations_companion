@@ -241,3 +241,17 @@
 - [x] Create PDF generation utility function
 - [x] Add Download button to invoice cards
 - [ ] Test invoice generation and PDF export end-to-end
+
+
+## Recurring Invoice Templates
+
+- [x] Create invoice_templates table schema
+- [x] Create template_items table for line items
+- [x] Build template management page UI
+- [x] Implement create/edit/delete template functions
+- [x] Add frequency options (weekly, monthly, quarterly, annually)
+- [x] Implement automatic invoice generation from templates
+- [x] Add template scheduling and next generation date tracking
+- [x] Create background job for automatic invoice generation
+- [ ] Add template preview functionality
+- [ ] Test recurring invoice generation end-to-end
