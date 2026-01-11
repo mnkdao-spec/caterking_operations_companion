@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/dashboard-layout";
-import { getInvoices, getEvents, generateInvoiceForEvent, type Invoice } from "@/lib/supabase-services";
-import { FileText, Plus } from "lucide-react";
+import { getInvoices, getEvents, generateInvoiceForEvent, getInvoiceItems, type Invoice } from "@/lib/supabase-services";
+import { FileText, Plus, Download } from "lucide-react";
+import { generateInvoicePDF } from "@/lib/pdf-generator";
 
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -12,6 +13,7 @@ export default function InvoicesPage() {
   const [generating, setGenerating] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string>("");
   const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [downloading, setDownloading] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -47,6 +49,19 @@ export default function InvoicesPage() {
       alert("Failed to generate invoice");
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleDownloadPDF = async (invoice: Invoice) => {
+    setDownloading(invoice.id);
+    try {
+      const items = await getInvoiceItems(invoice.id);
+      await generateInvoicePDF(invoice, items);
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      alert("Failed to download invoice PDF");
+    } finally {
+      setDownloading(null);
     }
   };
 
@@ -116,9 +131,19 @@ export default function InvoicesPage() {
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t text-sm text-gray-600">
-                    <div className="flex justify-between">
-                      <span>Labor: ${invoice.labor_costs_total.toLocaleString()}</span>
-                      <span>Tax: ${invoice.tax_amount.toLocaleString()}</span>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span>Labor: ${invoice.labor_costs_total.toLocaleString()}</span>
+                        <span className="ml-4">Tax: ${invoice.tax_amount.toLocaleString()}</span>
+                      </div>
+                      <button
+                        onClick={() => handleDownloadPDF(invoice)}
+                        disabled={downloading === invoice.id}
+                        className="flex items-center gap-2 px-3 py-1 text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
+                      >
+                        <Download className="h-4 w-4" />
+                        {downloading === invoice.id ? "Downloading..." : "Download"}
+                      </button>
                     </div>
                   </div>
                 </div>

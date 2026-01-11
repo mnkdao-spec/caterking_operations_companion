@@ -237,4 +237,7 @@
 - [x] Add "Generate Invoice" button for completed events
 - [x] Display invoice list with status
 - [x] Add Invoices link to navigation
-- [ ] Test invoice generation end-to-end
+- [x] Add PDF export functionality with jsPDF
+- [x] Create PDF generation utility function
+- [x] Add Download button to invoice cards
+- [ ] Test invoice generation and PDF export end-to-end
