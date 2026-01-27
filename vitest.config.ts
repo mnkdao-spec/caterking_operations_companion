@@ -3,9 +3,14 @@ import path from 'path';
 
 export default defineConfig({
   test: {
-    testTimeout: 10000,
+    testTimeout: 120000,
     globals: true,
     environment: 'node',
+    env: {
+      SUPABASE_URL: process.env.SUPABASE_URL || '',
+      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+    },
     include: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx', 'tests/**/*.test.ts'],
     exclude: ['node_modules', 'dist', '.expo', 'web/node_modules'],
     coverage: {
