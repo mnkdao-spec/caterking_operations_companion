@@ -181,11 +181,11 @@
 - [x] Create calendar UI component with weekly view
 - [x] Build scheduling page with event list and staff roster
 - [ ] Implement drag-and-drop staff assignment
-- [ ] Create staff_availability table for time-off and unavailable periods
-- [ ] Implement conflict detection logic (check overlapping event times)
-- [ ] Add visual conflict warnings in scheduling UI
-- [ ] Prevent assignment submission when conflicts detected
-- [ ] Add conflict resolution suggestions
+- [x] Create staff_availability table for time-off and unavailable periods
+- [x] Implement conflict detection logic (check overlapping event times)
+- [x] Add visual conflict warnings in scheduling UI
+- [x] Prevent assignment submission when conflicts detected
+- [x] Add conflict resolution suggestions
 - [x] Add assignment CRUD operations (create, update, delete)
 - [x] Display assigned hours and pay calculations
 - [ ] Test scheduling functionality end-to-end
@@ -255,3 +255,24 @@
 - [x] Create background job for automatic invoice generation
 - [ ] Add template preview functionality
 - [ ] Test recurring invoice generation end-to-end
+
+
+## Email Notifications
+
+- [ ] Set up email service (SendGrid or similar)
+- [ ] Create email templates for different events
+- [ ] Implement event confirmation email notifications
+- [ ] Implement staff assignment change notifications
+- [ ] Implement invoice generation email notifications
+- [ ] Add email notification preferences to user settings
+- [ ] Test email delivery for all notification types
+
+## Real-Time Dashboard Updates
+
+- [ ] Set up WebSocket server
+- [ ] Implement real-time event creation updates
+- [ ] Implement real-time event status change updates
+- [ ] Implement real-time invoice generation updates
+- [ ] Add WebSocket client to dashboard
+- [ ] Implement automatic data refresh on WebSocket messages
+- [ ] Test real-time updates across multiple browser tabs
