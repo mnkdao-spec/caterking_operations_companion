@@ -6,6 +6,7 @@ import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Platform } from "react-native";
 import { useColors } from "@/hooks/use-colors";
+import { OfflineIndicator } from "@/components/offline-indicator";
 
 export default function TabLayout() {
   const colors = useColors();
@@ -18,7 +19,15 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
-        headerShown: false,
+        headerShown: true,
+        headerTitle: '',
+        headerRight: () => <OfflineIndicator variant="compact" />,
+        headerStyle: {
+          backgroundColor: colors.background,
+          borderBottomColor: colors.border,
+          borderBottomWidth: 0.5,
+        },
+        headerTintColor: colors.foreground,
         tabBarButton: HapticTab,
         tabBarStyle: {
           paddingTop: 8,
