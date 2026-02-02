@@ -12,11 +12,11 @@ const schemeFromBundleId = `manus${timestamp}`;
 
 const env = {
   // App branding - update these values directly (do not use env vars)
-  appName: "CaterKing Ops",
+  appName: "CaterKing",
   appSlug: "caterking_operations_companion",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
-  logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663275914992/hkLyaqJQUeDbCVPk.png",
+  logoUrl: "https://private-us-east-1.manuscdn.com/sessionFile/D7DXXccr3rTHubRbO1tU05/sandbox/vkh3NtxUwjXWxByg7cqOyk-img-1_1770071568000_na1fn_aWNvbg.png",
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,
@@ -25,19 +25,42 @@ const env = {
 const config: ExpoConfig = {
   name: env.appName,
   slug: env.appSlug,
+  owner: "caterking",
+  privacy: "unlisted",
+  sdkVersion: "54.0.0",
   version: "1.0.0",
+  description: "Professional catering business operations management platform",
+  primaryColor: "#1e3a8a",
+  platforms: ["ios", "android", "web"],
   orientation: "portrait",
   icon: "./assets/images/icon.png",
+  runtimeVersion: "1.0.0",
+  notification: {
+    icon: "./assets/images/icon.png",
+    color: "#1e3a8a",
+  },
+  splash: {
+    image: "./assets/images/splash-icon.png",
+    resizeMode: "contain",
+    backgroundColor: "#1e3a8a",
+  },
   scheme: env.scheme,
   userInterfaceStyle: "automatic",
+  backgroundColor: "#ffffff",
   newArchEnabled: true,
+  assetBundlePatterns: ["**/*"],
+  updates: {
+    fallbackToCacheTimeout: 0,
+    url: "https://u.expo.dev/caterking",
+  },
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
+    backgroundColor: "#1e3a8a",
   },
   android: {
     adaptiveIcon: {
-      backgroundColor: "#D97706",
+      backgroundColor: "#1e3a8a",
       foregroundImage: "./assets/images/android-icon-foreground.png",
       backgroundImage: "./assets/images/android-icon-background.png",
       monochromeImage: "./assets/images/android-icon-monochrome.png",
@@ -63,7 +86,9 @@ const config: ExpoConfig = {
   web: {
     bundler: "metro",
     output: "static",
-    favicon: "./assets/images/favicon.png",
+    favicon: "./assets/images/icon.png",
+    backgroundColor: "#ffffff",
+    scope: "/caterking",
   },
   plugins: [
     "expo-router",
@@ -84,11 +109,11 @@ const config: ExpoConfig = {
       "expo-splash-screen",
       {
         image: "./assets/images/splash-icon.png",
-        imageWidth: 200,
+        imageWidth: 300,
         resizeMode: "contain",
-        backgroundColor: "#ffffff",
+        backgroundColor: "#1e3a8a",
         dark: {
-          backgroundColor: "#000000",
+          backgroundColor: "#1e3a8a",
         },
       },
     ],
@@ -104,6 +129,11 @@ const config: ExpoConfig = {
   experiments: {
     typedRoutes: true,
     reactCompiler: true,
+  },
+  extra: {
+    eas: {
+      projectId: "caterking-operations",
+    },
   },
 };
 
