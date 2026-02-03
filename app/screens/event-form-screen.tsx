@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TextInput, Pressable, Modal, ActivityIndicator } from 'react-native';
 import { ScreenContainer } from '@/components/screen-container';
-import { ErrorDisplay, RetryButton } from '@/components/error-display';
-import { LoadingSpinner, LoadingOverlay } from '@/components/loading-spinner';
+// Error and loading components not yet implemented
 import { useToast } from '@/shared/toast-context';
 import { ErrorInfo } from '@/shared/loading-error-types';
 import { cn } from '@/lib/utils';
@@ -107,13 +106,13 @@ export function EventFormScreen({ event, onSuccess, onClose }: EventFormScreenPr
 
           {/* Error Display */}
           {error && (
-            <View className="gap-3">
-              <ErrorDisplay
-                error={error}
-                onRetry={handleRetry}
-                onDismiss={() => setError(undefined)}
-                showDetails={true}
-              />
+            <View className="gap-3 bg-red-100 border border-red-500 rounded-lg p-3">
+              <Text className="text-sm font-semibold text-red-700">Error</Text>
+              <Text className="text-sm text-foreground">{error.message}</Text>
+              {error.details && <Text className="text-xs text-muted">{error.details}</Text>}
+              <Pressable onPress={handleRetry} className="bg-red-500 rounded px-3 py-2 mt-2">
+                <Text className="text-white text-center font-semibold">Retry</Text>
+              </Pressable>
             </View>
           )}
 
@@ -275,7 +274,16 @@ export function EventFormScreen({ event, onSuccess, onClose }: EventFormScreenPr
       </ScrollView>
 
       {/* Loading Overlay */}
-      <LoadingOverlay visible={isSubmitting} message="Saving event..." />
+      {isSubmitting && (
+        <Modal transparent animationType="fade" visible={true}>
+          <View className="flex-1 bg-black/50 items-center justify-center">
+            <View className="bg-background rounded-lg p-6 items-center gap-3">
+              <ActivityIndicator size="large" color="#0a7ea4" />
+              <Text className="text-foreground">Saving event...</Text>
+            </View>
+          </View>
+        </Modal>
+      )}
     </ScreenContainer>
   );
 }

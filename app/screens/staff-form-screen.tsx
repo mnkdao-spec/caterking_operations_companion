@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TextInput, Pressable, ActivityIndicator, Modal } from 'react-native';
 import { ScreenContainer } from '@/components/screen-container';
-import { ErrorDisplay } from '@/components/error-display';
-import { LoadingOverlay } from '@/components/loading-spinner';
+// Error components not yet implemented
+// Loading components not yet implemented
 import { useToast } from '@/shared/toast-context';
 import { ErrorInfo } from '@/shared/loading-error-types';
 import { cn } from '@/lib/utils';
@@ -284,7 +284,16 @@ export function StaffFormScreen({ staff, onSuccess, onClose }: StaffFormScreenPr
       </ScrollView>
 
       {/* Loading Overlay */}
-      <LoadingOverlay visible={isSubmitting} message="Saving staff member..." />
+      {isSubmitting && (
+        <Modal transparent animationType="fade" visible={true}>
+          <View className="flex-1 bg-black/50 items-center justify-center">
+            <View className="bg-background rounded-lg p-6 items-center gap-3">
+              <ActivityIndicator size="large" color="#0a7ea4" />
+              <Text className="text-foreground">Saving staff member...</Text>
+            </View>
+          </View>
+        </Modal>
+      )}
     </ScreenContainer>
   );
 }
