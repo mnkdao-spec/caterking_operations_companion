@@ -276,3 +276,100 @@
 - [ ] Add WebSocket client to dashboard
 - [ ] Implement automatic data refresh on WebSocket messages
 - [ ] Test real-time updates across multiple browser tabs
+
+
+## Phase 5: UI/UX Polish & Enhanced Forms (In Progress)
+
+- [x] OLD-82: Offline Indicator Component - Shows sync status with pending count
+- [x] OLD-83: Conflict Resolution UI - Manual and automatic resolution with 5 strategies
+- [x] OLD-84: Loading States & Error Handling - Spinners, skeletons, error displays, toast notifications
+- [x] OLD-85: Mobile App Branding - Custom catering-themed icon and splash screen
+- [ ] Integrate enhanced forms into app pages - Replace existing forms with EventFormEnhanced, StaffFormEnhanced, InvoiceFormEnhanced
+  - [ ] Replace event forms in web pages with EventFormEnhanced
+  - [ ] Replace staff forms in web pages with StaffFormEnhanced
+  - [ ] Replace invoice forms in web pages with InvoiceFormEnhanced
+  - [ ] Replace event forms in mobile screens with EventFormScreen
+  - [ ] Replace staff forms in mobile screens with StaffFormScreen
+  - [ ] Replace invoice forms in mobile screens with InvoiceFormScreen
+  - [ ] Test all form submissions with loading states and error handling
+- [ ] OLD-86: Web Dashboard Redesign - Improve card designs, spacing, visual hierarchy
+- [ ] OLD-87: Accessibility Improvements - ARIA labels, keyboard navigation, WCAG 2.1 AA compliance
+- [ ] OLD-88: Performance Optimization - Code splitting, lazy loading, image optimization, caching
+
+
+## Phase 6: Critical Technical Improvements (Immediate Priorities)
+
+### Authentication & Security
+- [ ] Unify dual authentication systems (Manus OAuth + Supabase Auth)
+  - [ ] Integrate OAuth response with Supabase session
+  - [ ] Remove duplicate auth context
+  - [ ] Test unified auth flow
+- [ ] Implement token refresh mechanism
+  - [ ] Add refresh token storage
+  - [ ] Create token refresh logic
+  - [ ] Handle token expiration gracefully
+- [ ] Add CSRF protection to API calls
+  - [ ] Implement CSRF token generation on backend
+  - [ ] Add CSRF token validation middleware
+  - [ ] Include CSRF token in all mutations
+
+### Data Integrity & Consistency
+- [ ] Fix inventory rollback issue in KDS
+  - [ ] Reverse operation order (decrement before bump)
+  - [ ] OR create database transaction wrapper
+  - [ ] Add comprehensive error handling
+  - [ ] Test rollback scenarios
+- [ ] Fix N+1 query pattern in KDS
+  - [ ] Batch load order items instead of per-course queries
+  - [ ] Implement client-side grouping
+  - [ ] Measure performance improvement
+
+### Code Quality & Maintainability
+- [ ] Add TypeScript interfaces for Web ERP services
+  - [ ] Create service-types.ts with all entity interfaces
+  - [ ] Update all service functions with proper types
+  - [ ] Add validation for all parameters
+- [ ] Extract code duplication in Web ERP
+  - [ ] Create use-crud-list.ts hook
+  - [ ] Refactor Events, Clients, Staff, Menus pages
+  - [ ] Reduce codebase by ~1,200 lines
+- [ ] Split large service file (web/lib/supabase-services.ts)
+  - [ ] Create web/lib/services/ directory
+  - [ ] Split into events.ts, clients.ts, staff.ts, assignments.ts, invoices.ts, templates.ts, realtime.ts
+  - [ ] Update all imports across web app
+- [ ] Standardize error handling across services
+  - [ ] Create ServiceResult<T> type
+  - [ ] Apply to all service functions
+  - [ ] Update UI components to handle consistent error format
+
+### Offline & Sync
+- [ ] Unify offline queue systems
+  - [ ] Deprecate simple offline-queue.ts
+  - [ ] Migrate KDS to OfflineSyncManager
+  - [ ] Create offline-sync-helpers.ts for KDS operations
+  - [ ] Test offline operations and sync
+- [ ] Implement conflict resolution in offline sync
+  - [ ] Add ConflictStrategy enum
+  - [ ] Implement conflict detection (409 responses)
+  - [ ] Add resolver for client-wins, server-wins, manual strategies
+  - [ ] Test conflict scenarios
+
+### Validation & Input Handling
+- [ ] Add input validation with Zod
+  - [ ] Create validation schemas for all entities
+  - [ ] Add form-level validation
+  - [ ] Display validation errors in UI
+  - [ ] Test all validation rules
+- [ ] Move filtering to server-side
+  - [ ] Update service functions to accept filter parameters
+  - [ ] Implement pagination
+  - [ ] Add sorting options
+  - [ ] Test with large datasets
+
+### KDS UI Integration
+- [ ] Connect KDS UI to context (CRITICAL)
+  - [ ] Replace mock data in expo.tsx with useKDSInventory()
+  - [ ] Replace mock data in station.tsx with real context
+  - [ ] Replace mock data in plating.tsx with real context
+  - [ ] Add loading states and error handling
+  - [ ] Test end-to-end KDS workflow
