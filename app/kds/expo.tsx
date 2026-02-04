@@ -15,7 +15,7 @@ import { Platform } from "react-native";
 import { handleCourseCompletion } from "@/lib/kds-inventory-integration";
 import { KDSErrorRecovery } from "@/components/kds-error-recovery";
 import { useKDSRealtimeData } from "@/hooks/use-kds-realtime";
-import { useEffect, useState } from "react";
+
 
 // KDS Color palette
 const KDS_COLORS = {
