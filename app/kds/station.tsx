@@ -6,6 +6,9 @@ import {
   StyleSheet,
   FlatList,
   Dimensions,
+  Alert,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -16,6 +19,7 @@ import Animated, {
   withTiming,
   withSequence,
 } from "react-native-reanimated";
+import { handleOrderItemCompletion } from "@/lib/kds-inventory-integration";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -43,6 +47,8 @@ interface OrderItem {
   modifications: string[];
   firedAt: Date;
   course: string;
+  menuItemId?: string; // For inventory tracking
+  eventId?: string; // For inventory tracking
 }
 
 // Mock data for different stations
@@ -58,6 +64,8 @@ const generateMockOrders = (stationType: string): OrderItem[] => {
         modifications: ["Medium-Rare", "No pepper"],
         firedAt: new Date(Date.now() - 6 * 60000),
         course: "Main Course",
+        menuItemId: "menu-ribeye",
+        eventId: "event-wedding",
       },
       {
         id: "g2",
@@ -68,6 +76,8 @@ const generateMockOrders = (stationType: string): OrderItem[] => {
         modifications: ["Well done"],
         firedAt: new Date(Date.now() - 4 * 60000),
         course: "Main Course",
+        menuItemId: "menu-salmon",
+        eventId: "event-wedding",
       },
       {
         id: "g3",
@@ -78,6 +88,8 @@ const generateMockOrders = (stationType: string): OrderItem[] => {
         modifications: ["Medium"],
         firedAt: new Date(Date.now() - 2 * 60000),
         course: "Main Course",
+        menuItemId: "menu-lamb",
+        eventId: "event-wedding",
       },
       {
         id: "g4",
@@ -88,6 +100,8 @@ const generateMockOrders = (stationType: string): OrderItem[] => {
         modifications: [],
         firedAt: new Date(Date.now() - 1 * 60000),
         course: "Main Course",
+        menuItemId: "menu-chicken",
+        eventId: "event-wedding",
       },
     ],
     saute: [
@@ -100,6 +114,8 @@ const generateMockOrders = (stationType: string): OrderItem[] => {
         modifications: ["Extra truffle"],
         firedAt: new Date(Date.now() - 5 * 60000),
         course: "Main Course",
+        menuItemId: "menu-risotto",
+        eventId: "event-wedding",
       },
       {
         id: "s2",
@@ -110,6 +126,8 @@ const generateMockOrders = (stationType: string): OrderItem[] => {
         modifications: ["No garlic"],
         firedAt: new Date(Date.now() - 3 * 60000),
         course: "Main Course",
+        menuItemId: "menu-scampi",
+        eventId: "event-wedding",
       },
       {
         id: "s3",
@@ -120,6 +138,8 @@ const generateMockOrders = (stationType: string): OrderItem[] => {
         modifications: ["Vegan"],
         firedAt: new Date(Date.now() - 1 * 60000),
         course: "Main Course",
+        menuItemId: "menu-stirfry",
+        eventId: "event-wedding",
       },
     ],
     garde_manger: [
@@ -132,6 +152,8 @@ const generateMockOrders = (stationType: string): OrderItem[] => {
         modifications: ["Dressing on side"],
         firedAt: new Date(Date.now() - 2 * 60000),
         course: "Salads",
+        menuItemId: "menu-caesar",
+        eventId: "event-wedding",
       },
       {
         id: "gm2",
@@ -142,6 +164,8 @@ const generateMockOrders = (stationType: string): OrderItem[] => {
         modifications: [],
         firedAt: new Date(Date.now() - 1 * 60000),
         course: "Salads",
+        menuItemId: "menu-caprese",
+        eventId: "event-wedding",
       },
     ],
     dessert: [
@@ -154,6 +178,8 @@ const generateMockOrders = (stationType: string): OrderItem[] => {
         modifications: [],
         firedAt: new Date(Date.now() - 3 * 60000),
         course: "Dessert",
+        menuItemId: "menu-lava",
+        eventId: "event-wedding",
       },
     ],
   };
@@ -169,6 +195,9 @@ export default function StationDisplay() {
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [bumpingId, setBumpingId] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingError, setProcessingError] = useState<string | null>(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   useEffect(() => {
     setOrders(generateMockOrders(stationType));
@@ -189,18 +218,61 @@ export default function StationDisplay() {
     return KDS_COLORS.ready;
   };
 
-  const handleBump = useCallback((orderId: string) => {
-    if (Platform.OS !== "web") {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
+  const handleBump = useCallback(
+    async (orderId: string) => {
+      const order = orders.find((o) => o.id === orderId);
+      if (!order) return;
 
-    setBumpingId(orderId);
+      // Show processing state
+      setIsProcessing(true);
+      setBumpingId(orderId);
+      setProcessingError(null);
 
-    setTimeout(() => {
-      setOrders((prev) => prev.filter((order) => order.id !== orderId));
-      setBumpingId(null);
-    }, 300);
-  }, []);
+      try {
+        // Call new inventory transaction system
+        const result = await handleOrderItemCompletion(
+          orderId,
+          order.eventId || "event-default",
+          order.menuItemId || "menu-item-default",
+          order.quantity
+        );
+
+        if (result.success) {
+          // Haptic feedback for success
+          if (Platform.OS !== "web") {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }
+
+          // Remove order from queue with animation
+          setTimeout(() => {
+            setOrders((prev) => prev.filter((o) => o.id !== orderId));
+            setBumpingId(null);
+            setIsProcessing(false);
+          }, 300);
+        } else {
+          // Show error to operator
+          if (Platform.OS !== "web") {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          }
+          setProcessingError(result.message);
+          setShowErrorModal(true);
+          setBumpingId(null);
+          setIsProcessing(false);
+        }
+      } catch (error) {
+        // Handle unexpected errors
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+        setProcessingError(`Failed to complete order: ${errorMessage}`);
+        setShowErrorModal(true);
+        setBumpingId(null);
+        setIsProcessing(false);
+      }
+    },
+    [orders]
+  );
 
   const handleBack = () => {
     if (Platform.OS !== "web") {
@@ -229,6 +301,7 @@ export default function StationDisplay() {
     const timerColor = getTimerColor(elapsedMinutes);
     const isBumping = bumpingId === item.id;
     const isOldest = index === 0;
+    const isDisabled = isProcessing && isBumping;
 
     return (
       <Animated.View
@@ -236,6 +309,7 @@ export default function StationDisplay() {
           styles.orderCard,
           isOldest && styles.orderCardOldest,
           isBumping && styles.orderCardBumping,
+          isDisabled && styles.orderCardDisabled,
           { borderLeftColor: timerColor },
         ]}
       >
@@ -271,14 +345,25 @@ export default function StationDisplay() {
           )}
         </View>
 
-        {/* BUMP Button */}
+        {/* BUMP Button with Loading State */}
         <TouchableOpacity
           onPress={() => handleBump(item.id)}
-          style={[styles.bumpButton, isBumping && styles.bumpButtonPressed]}
+          style={[
+            styles.bumpButton,
+            isBumping && styles.bumpButtonPressed,
+            isDisabled && styles.bumpButtonDisabled,
+          ]}
           activeOpacity={0.8}
+          disabled={isDisabled}
         >
-          <Text style={styles.bumpButtonText}>BUMP</Text>
-          <Text style={styles.bumpButtonSubtext}>TAP WHEN DONE</Text>
+          {isDisabled ? (
+            <ActivityIndicator size="small" color={KDS_COLORS.text} />
+          ) : (
+            <>
+              <Text style={styles.bumpButtonText}>BUMP</Text>
+              <Text style={styles.bumpButtonSubtext}>TAP WHEN DONE</Text>
+            </>
+          )}
         </TouchableOpacity>
       </Animated.View>
     );
@@ -320,6 +405,7 @@ export default function StationDisplay() {
           showsVerticalScrollIndicator={false}
           numColumns={SCREEN_WIDTH > 1000 ? 2 : 1}
           key={SCREEN_WIDTH > 1000 ? "2col" : "1col"}
+          scrollEnabled={!isProcessing}
         />
       ) : (
         <View style={styles.emptyState}>
@@ -341,23 +427,31 @@ export default function StationDisplay() {
           </Text>
           <Text style={styles.footerStatLabel}>Completed</Text>
         </View>
-        <View style={styles.footerStat}>
-          <Text
-            style={[
-              styles.footerStatValue,
-              orders.some((o) => getElapsedMinutes(o.firedAt) >= 8) && {
-                color: KDS_COLORS.urgent,
-              },
-            ]}
-          >
-            {orders.length > 0
-              ? Math.max(...orders.map((o) => getElapsedMinutes(o.firedAt)))
-              : 0}
-            m
-          </Text>
-          <Text style={styles.footerStatLabel}>Oldest</Text>
-        </View>
       </View>
+
+      {/* Error Modal */}
+      <Modal
+        visible={showErrorModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowErrorModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.errorModal}>
+            <Text style={styles.errorModalTitle}>⚠️ Order Completion Failed</Text>
+            <Text style={styles.errorModalMessage}>{processingError}</Text>
+            <Text style={styles.errorModalSubtext}>
+              The order status has been reverted. Please check inventory and retry.
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowErrorModal(false)}
+              style={styles.errorModalButton}
+            >
+              <Text style={styles.errorModalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -371,194 +465,240 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingTop: 48,
-    paddingBottom: 16,
-    borderBottomWidth: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: KDS_COLORS.surface,
+    borderBottomWidth: 3,
   },
   backButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: KDS_COLORS.surface,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   backButtonText: {
     color: KDS_COLORS.text,
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "600",
   },
   headerCenter: {
+    flex: 1,
     alignItems: "center",
   },
   stationTitle: {
-    fontSize: 36,
-    fontWeight: "900",
-    letterSpacing: 2,
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 4,
   },
   queueCount: {
+    fontSize: 12,
     color: KDS_COLORS.textMuted,
-    fontSize: 16,
-    marginTop: 4,
-    letterSpacing: 1,
   },
   headerRight: {
     alignItems: "flex-end",
   },
   timeDisplay: {
+    fontSize: 18,
+    fontWeight: "bold",
     color: KDS_COLORS.text,
-    fontSize: 36,
-    fontWeight: "700",
-    fontVariant: ["tabular-nums"],
   },
   orderList: {
-    padding: 16,
-    gap: 16,
+    padding: 12,
+    gap: 12,
   },
   orderCard: {
-    flex: 1,
+    flexDirection: "row",
     backgroundColor: KDS_COLORS.surface,
-    borderRadius: 16,
-    borderLeftWidth: 8,
-    margin: 8,
+    borderRadius: 8,
+    borderLeftWidth: 4,
     overflow: "hidden",
+    marginBottom: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   orderCardOldest: {
     borderWidth: 2,
-    borderColor: KDS_COLORS.warning,
+    borderColor: KDS_COLORS.urgent,
   },
   orderCardBumping: {
-    opacity: 0.5,
-    transform: [{ scale: 0.95 }],
+    backgroundColor: KDS_COLORS.ready,
+  },
+  orderCardDisabled: {
+    opacity: 0.6,
   },
   timerBadge: {
-    position: "absolute",
-    top: 12,
-    right: 12,
+    width: 60,
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    zIndex: 1,
   },
   timerText: {
     color: KDS_COLORS.text,
     fontSize: 18,
-    fontWeight: "800",
-    fontVariant: ["tabular-nums"],
+    fontWeight: "bold",
   },
   orderContent: {
-    padding: 20,
-    paddingBottom: 12,
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
   },
   orderHeader: {
     flexDirection: "row",
-    alignItems: "baseline",
-    gap: 12,
-    marginBottom: 12,
+    alignItems: "center",
+    marginBottom: 8,
   },
   orderQuantity: {
-    color: KDS_COLORS.text,
-    fontSize: 48,
-    fontWeight: "900",
+    color: KDS_COLORS.warning,
+    fontSize: 16,
+    fontWeight: "bold",
+    marginRight: 8,
   },
   orderName: {
     color: KDS_COLORS.text,
-    fontSize: 28,
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: "600",
     flex: 1,
   },
   tableInfo: {
     flexDirection: "row",
-    gap: 16,
-    marginBottom: 12,
+    gap: 12,
+    marginBottom: 8,
   },
   tableGroup: {
     color: KDS_COLORS.textMuted,
-    fontSize: 16,
+    fontSize: 12,
   },
   tableNumber: {
-    color: KDS_COLORS.fire,
-    fontSize: 16,
-    fontWeight: "700",
+    color: KDS_COLORS.textMuted,
+    fontSize: 12,
   },
   courseName: {
     color: KDS_COLORS.textMuted,
-    fontSize: 16,
+    fontSize: 12,
   },
   modifications: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: 6,
   },
   modBadge: {
-    backgroundColor: KDS_COLORS.warning + "30",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
+    backgroundColor: KDS_COLORS.surfaceLight,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
   },
   modText: {
     color: KDS_COLORS.warning,
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 11,
+    fontWeight: "500",
   },
   bumpButton: {
-    backgroundColor: KDS_COLORS.bump,
-    paddingVertical: 24,
-    alignItems: "center",
+    width: 80,
     justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: KDS_COLORS.bump,
+    paddingHorizontal: 8,
   },
   bumpButtonPressed: {
     backgroundColor: KDS_COLORS.ready,
   },
+  bumpButtonDisabled: {
+    opacity: 0.5,
+  },
   bumpButtonText: {
     color: KDS_COLORS.text,
-    fontSize: 32,
-    fontWeight: "900",
-    letterSpacing: 2,
+    fontSize: 14,
+    fontWeight: "bold",
   },
   bumpButtonSubtext: {
-    color: "rgba(255,255,255,0.7)",
-    fontSize: 12,
-    marginTop: 4,
+    color: KDS_COLORS.text,
+    fontSize: 10,
+    marginTop: 2,
   },
   emptyState: {
     flex: 1,
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
   },
   emptyIcon: {
-    fontSize: 80,
-    marginBottom: 20,
+    fontSize: 48,
+    marginBottom: 12,
   },
   emptyTitle: {
-    color: KDS_COLORS.ready,
-    fontSize: 36,
-    fontWeight: "900",
-    letterSpacing: 2,
+    color: KDS_COLORS.text,
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 4,
   },
   emptySubtitle: {
     color: KDS_COLORS.textMuted,
-    fontSize: 18,
-    marginTop: 8,
+    fontSize: 14,
   },
   footer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    paddingVertical: 20,
-    borderTopWidth: 2,
-    borderTopColor: KDS_COLORS.border,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     backgroundColor: KDS_COLORS.surface,
+    borderTopWidth: 1,
+    borderTopColor: KDS_COLORS.border,
   },
   footerStat: {
     alignItems: "center",
   },
   footerStatValue: {
     color: KDS_COLORS.text,
-    fontSize: 32,
-    fontWeight: "800",
+    fontSize: 20,
+    fontWeight: "bold",
   },
   footerStatLabel: {
     color: KDS_COLORS.textMuted,
-    fontSize: 14,
+    fontSize: 12,
     marginTop: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorModal: {
+    backgroundColor: KDS_COLORS.surface,
+    borderRadius: 12,
+    padding: 24,
+    width: "80%",
+    maxWidth: 400,
+    borderLeftWidth: 4,
+    borderLeftColor: KDS_COLORS.urgent,
+  },
+  errorModalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: KDS_COLORS.text,
+    marginBottom: 12,
+  },
+  errorModalMessage: {
+    fontSize: 14,
+    color: KDS_COLORS.text,
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  errorModalSubtext: {
+    fontSize: 12,
+    color: KDS_COLORS.textMuted,
+    marginBottom: 16,
+  },
+  errorModalButton: {
+    backgroundColor: KDS_COLORS.urgent,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  errorModalButtonText: {
+    color: KDS_COLORS.text,
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

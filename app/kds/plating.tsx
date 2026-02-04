@@ -6,10 +6,13 @@ import {
   StyleSheet,
   FlatList,
   ScrollView,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { Platform } from "react-native";
+import { handleBatchOrderCompletion } from "@/lib/kds-inventory-integration";
 
 // KDS Color palette
 const KDS_COLORS = {
@@ -44,6 +47,7 @@ interface PlateOrder {
   components: PlateComponent[];
   allReady: boolean;
   waitingTime: number; // minutes since first component was ready
+  eventId?: string; // For inventory tracking
 }
 
 const MOCK_PLATE_ORDERS: PlateOrder[] = [
@@ -60,6 +64,7 @@ const MOCK_PLATE_ORDERS: PlateOrder[] = [
     ],
     allReady: true,
     waitingTime: 2,
+    eventId: "event-wedding",
   },
   {
     id: "p2",
@@ -74,6 +79,7 @@ const MOCK_PLATE_ORDERS: PlateOrder[] = [
     ],
     allReady: false,
     waitingTime: 1,
+    eventId: "event-wedding",
   },
   {
     id: "p3",
@@ -87,6 +93,7 @@ const MOCK_PLATE_ORDERS: PlateOrder[] = [
     ],
     allReady: true,
     waitingTime: 3,
+    eventId: "event-wedding",
   },
   {
     id: "p4",
@@ -100,6 +107,7 @@ const MOCK_PLATE_ORDERS: PlateOrder[] = [
     ],
     allReady: false,
     waitingTime: 0,
+    eventId: "event-wedding",
   },
 ];
 
@@ -107,17 +115,103 @@ export default function PlatingStation() {
   const [orders, setOrders] = useState<PlateOrder[]>(MOCK_PLATE_ORDERS);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [filter, setFilter] = useState<"all" | "ready" | "waiting">("all");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingError, setProcessingError] = useState<string | null>(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [completedCount, setCompletedCount] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const handlePlateComplete = (orderId: string) => {
-    if (Platform.OS !== "web") {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  const handlePlateComplete = async (orderId: string) => {
+    const order = orders.find((o) => o.id === orderId);
+    if (!order) return;
+
+    setIsProcessing(true);
+    setProcessingError(null);
+
+    try {
+      // Call inventory transaction system for single order
+      const result = await handleBatchOrderCompletion([orderId], order.eventId || "event-default");
+
+      if (result.length > 0 && result[0].success) {
+        // Haptic feedback for success
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+
+        // Remove order from queue
+        setOrders((prev) => prev.filter((o) => o.id !== orderId));
+        setCompletedCount((prev) => prev + 1);
+      } else {
+        // Show error to operator
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+        const errorMsg = result.length > 0 ? result[0].message : "Unknown error";
+        setProcessingError(errorMsg);
+        setShowErrorModal(true);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+      setProcessingError(`Failed to complete order: ${errorMessage}`);
+      setShowErrorModal(true);
+    } finally {
+      setIsProcessing(false);
     }
-    setOrders((prev) => prev.filter((order) => order.id !== orderId));
+  };
+
+  const handlePlateMultiple = async () => {
+    const readyOrderIds = orders.filter((o) => o.allReady).map((o) => o.id);
+    if (readyOrderIds.length === 0) return;
+
+    setIsProcessing(true);
+    setProcessingError(null);
+
+    try {
+      // Get first event ID from ready orders
+      const firstReadyOrder = orders.find((o) => o.allReady);
+      const eventId = firstReadyOrder?.eventId || "event-default";
+
+      const results = await handleBatchOrderCompletion(readyOrderIds, eventId);
+
+      const successful = results.filter((r) => r.success).length;
+      const failed = results.filter((r) => !r.success).length;
+
+      if (successful > 0) {
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+
+        // Remove successful orders
+        setOrders((prev) =>
+          prev.filter((o) => !readyOrderIds.includes(o.id))
+        );
+        setCompletedCount((prev) => prev + successful);
+      }
+
+      if (failed > 0) {
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+        setProcessingError(`${successful} completed, ${failed} failed. Check inventory.`);
+        setShowErrorModal(true);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+      setProcessingError(`Failed to complete orders: ${errorMessage}`);
+      setShowErrorModal(true);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleBack = () => {
@@ -211,10 +305,15 @@ export default function PlatingStation() {
       {item.allReady && (
         <TouchableOpacity
           onPress={() => handlePlateComplete(item.id)}
-          style={styles.plateButton}
+          style={[styles.plateButton, isProcessing && styles.plateButtonDisabled]}
           activeOpacity={0.8}
+          disabled={isProcessing}
         >
-          <Text style={styles.plateButtonText}>🍽️ PLATED & SERVED</Text>
+          {isProcessing ? (
+            <ActivityIndicator size="small" color={KDS_COLORS.text} />
+          ) : (
+            <Text style={styles.plateButtonText}>🍽️ PLATED & SERVED</Text>
+          )}
         </TouchableOpacity>
       )}
     </View>
@@ -288,6 +387,17 @@ export default function PlatingStation() {
         </TouchableOpacity>
       </View>
 
+      {/* Batch Action Button */}
+      {readyCount > 1 && (
+        <TouchableOpacity
+          onPress={handlePlateMultiple}
+          style={[styles.batchButton, isProcessing && styles.batchButtonDisabled]}
+          disabled={isProcessing}
+        >
+          <Text style={styles.batchButtonText}>🚀 PLATE ALL {readyCount} READY</Text>
+        </TouchableOpacity>
+      )}
+
       {/* Orders Grid */}
       <FlatList
         data={filteredOrders}
@@ -296,6 +406,7 @@ export default function PlatingStation() {
         contentContainerStyle={styles.ordersList}
         showsVerticalScrollIndicator={false}
         numColumns={2}
+        scrollEnabled={!isProcessing}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>🍽️</Text>
@@ -323,15 +434,39 @@ export default function PlatingStation() {
           <Text style={[styles.footerStatValue, { color: KDS_COLORS.warning }]}>
             {waitingCount}
           </Text>
-          <Text style={styles.footerStatLabel}>Waiting on Kitchen</Text>
+          <Text style={styles.footerStatLabel}>Waiting</Text>
         </View>
         <View style={styles.footerStat}>
-          <Text style={styles.footerStatValue}>
-            {orders.filter((o) => o.allReady && o.waitingTime >= 3).length}
+          <Text style={[styles.footerStatValue, { color: KDS_COLORS.bump }]}>
+            {completedCount}
           </Text>
-          <Text style={styles.footerStatLabel}>Urgent (3m+)</Text>
+          <Text style={styles.footerStatLabel}>Completed</Text>
         </View>
       </View>
+
+      {/* Error Modal */}
+      <Modal
+        visible={showErrorModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowErrorModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.errorModal}>
+            <Text style={styles.errorModalTitle}>⚠️ Plating Failed</Text>
+            <Text style={styles.errorModalMessage}>{processingError}</Text>
+            <Text style={styles.errorModalSubtext}>
+              Check inventory and retry individual orders.
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowErrorModal(false)}
+              style={styles.errorModalButton}
+            >
+              <Text style={styles.errorModalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -345,124 +480,148 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingTop: 48,
-    paddingBottom: 16,
-    borderBottomWidth: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: KDS_COLORS.surface,
+    borderBottomWidth: 2,
     borderBottomColor: KDS_COLORS.plating,
   },
   backButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: KDS_COLORS.surface,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   backButtonText: {
     color: KDS_COLORS.text,
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "600",
   },
   headerCenter: {
+    flex: 1,
     alignItems: "center",
   },
   stationTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
     color: KDS_COLORS.plating,
-    fontSize: 32,
-    fontWeight: "900",
-    letterSpacing: 1,
+    marginBottom: 4,
   },
   subtitle: {
+    fontSize: 12,
     color: KDS_COLORS.textMuted,
-    fontSize: 14,
-    marginTop: 4,
   },
   headerRight: {
     alignItems: "flex-end",
   },
   timeDisplay: {
+    fontSize: 16,
+    fontWeight: "bold",
     color: KDS_COLORS.text,
-    fontSize: 32,
-    fontWeight: "700",
-    fontVariant: ["tabular-nums"],
   },
   filterRow: {
     flexDirection: "row",
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    gap: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
+    backgroundColor: KDS_COLORS.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: KDS_COLORS.border,
   },
   filterTab: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    backgroundColor: KDS_COLORS.surface,
-    borderRadius: 8,
-    borderWidth: 2,
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    borderWidth: 1,
     borderColor: KDS_COLORS.border,
+    alignItems: "center",
   },
   filterTabActive: {
     backgroundColor: KDS_COLORS.surfaceLight,
-    borderColor: KDS_COLORS.text,
+    borderColor: KDS_COLORS.plating,
   },
   filterTabText: {
     color: KDS_COLORS.textMuted,
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: "600",
   },
   filterTabTextActive: {
     color: KDS_COLORS.text,
   },
+  batchButton: {
+    marginHorizontal: 12,
+    marginVertical: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: KDS_COLORS.ready,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  batchButtonDisabled: {
+    opacity: 0.5,
+  },
+  batchButtonText: {
+    color: KDS_COLORS.text,
+    fontSize: 14,
+    fontWeight: "bold",
+  },
   ordersList: {
-    padding: 16,
+    padding: 12,
+    gap: 12,
   },
   plateCard: {
     flex: 1,
     backgroundColor: KDS_COLORS.surface,
-    borderRadius: 16,
-    margin: 8,
-    overflow: "hidden",
-    borderWidth: 2,
+    borderRadius: 8,
+    borderWidth: 1,
     borderColor: KDS_COLORS.border,
+    marginHorizontal: 6,
+    marginBottom: 12,
+    overflow: "hidden",
   },
   plateCardReady: {
     borderColor: KDS_COLORS.ready,
+    borderWidth: 2,
   },
   plateCardUrgent: {
     borderColor: KDS_COLORS.urgent,
-    borderWidth: 3,
+    backgroundColor: KDS_COLORS.surfaceLight,
   },
   plateHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    padding: 16,
-    backgroundColor: KDS_COLORS.surfaceLight,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: KDS_COLORS.border,
   },
-  plateInfo: {},
+  plateInfo: {
+    flex: 1,
+  },
   tableNumber: {
     color: KDS_COLORS.text,
-    fontSize: 24,
-    fontWeight: "800",
+    fontSize: 14,
+    fontWeight: "bold",
   },
   tableGroup: {
     color: KDS_COLORS.textMuted,
-    fontSize: 14,
-    marginTop: 2,
+    fontSize: 12,
   },
   plateMetaRight: {
     alignItems: "flex-end",
   },
   courseName: {
-    color: KDS_COLORS.fire,
-    fontSize: 16,
-    fontWeight: "700",
+    color: KDS_COLORS.text,
+    fontSize: 12,
+    fontWeight: "600",
   },
   guestCount: {
     color: KDS_COLORS.textMuted,
-    fontSize: 14,
-    marginTop: 2,
+    fontSize: 11,
   },
   statusBanner: {
     backgroundColor: KDS_COLORS.ready,
-    paddingVertical: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     alignItems: "center",
   },
   statusBannerUrgent: {
@@ -470,109 +629,159 @@ const styles = StyleSheet.create({
   },
   statusBannerText: {
     color: KDS_COLORS.text,
-    fontSize: 16,
-    fontWeight: "800",
+    fontSize: 12,
+    fontWeight: "bold",
   },
   componentsList: {
-    padding: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
   componentRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 10,
+    paddingVertical: 6,
     paddingHorizontal: 8,
-    borderRadius: 8,
-    marginBottom: 8,
-    backgroundColor: KDS_COLORS.background,
+    marginBottom: 4,
+    borderRadius: 4,
   },
   componentReady: {
-    backgroundColor: KDS_COLORS.ready + "20",
+    backgroundColor: KDS_COLORS.surfaceLight,
   },
   componentStatus: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     justifyContent: "center",
-    marginRight: 12,
+    alignItems: "center",
+    marginRight: 8,
   },
   checkmark: {
     color: KDS_COLORS.text,
-    fontSize: 18,
-    fontWeight: "800",
+    fontSize: 14,
+    fontWeight: "bold",
   },
   waitingDot: {
     color: KDS_COLORS.text,
-    fontSize: 18,
+    fontSize: 16,
   },
   componentInfo: {
     flex: 1,
   },
   componentName: {
     color: KDS_COLORS.text,
-    fontSize: 16,
+    fontSize: 11,
     fontWeight: "600",
   },
   componentStation: {
     color: KDS_COLORS.textMuted,
-    fontSize: 12,
+    fontSize: 10,
     marginTop: 2,
   },
   waitingLabel: {
     color: KDS_COLORS.warning,
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: 10,
+    fontWeight: "bold",
   },
   plateButton: {
-    backgroundColor: KDS_COLORS.plating,
-    paddingVertical: 20,
+    marginHorizontal: 12,
+    marginVertical: 8,
+    paddingVertical: 10,
+    backgroundColor: KDS_COLORS.ready,
+    borderRadius: 6,
     alignItems: "center",
+  },
+  plateButtonDisabled: {
+    opacity: 0.5,
   },
   plateButtonText: {
     color: KDS_COLORS.text,
-    fontSize: 20,
-    fontWeight: "900",
-    letterSpacing: 1,
+    fontSize: 12,
+    fontWeight: "bold",
   },
   emptyState: {
     flex: 1,
-    alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 60,
+    alignItems: "center",
+    paddingVertical: 40,
   },
   emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
+    fontSize: 48,
+    marginBottom: 12,
   },
   emptyTitle: {
-    color: KDS_COLORS.textMuted,
-    fontSize: 24,
-    fontWeight: "800",
+    color: KDS_COLORS.text,
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 4,
   },
   emptySubtitle: {
     color: KDS_COLORS.textMuted,
-    fontSize: 16,
-    marginTop: 8,
+    fontSize: 12,
   },
   footer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    paddingVertical: 20,
-    borderTopWidth: 2,
-    borderTopColor: KDS_COLORS.border,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     backgroundColor: KDS_COLORS.surface,
+    borderTopWidth: 1,
+    borderTopColor: KDS_COLORS.border,
   },
   footerStat: {
     alignItems: "center",
   },
   footerStatValue: {
     color: KDS_COLORS.text,
-    fontSize: 32,
-    fontWeight: "800",
+    fontSize: 18,
+    fontWeight: "bold",
   },
   footerStatLabel: {
     color: KDS_COLORS.textMuted,
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorModal: {
+    backgroundColor: KDS_COLORS.surface,
+    borderRadius: 12,
+    padding: 24,
+    width: "80%",
+    maxWidth: 400,
+    borderLeftWidth: 4,
+    borderLeftColor: KDS_COLORS.urgent,
+  },
+  errorModalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: KDS_COLORS.text,
+    marginBottom: 12,
+  },
+  errorModalMessage: {
+    fontSize: 14,
+    color: KDS_COLORS.text,
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  errorModalSubtext: {
+    fontSize: 12,
+    color: KDS_COLORS.textMuted,
+    marginBottom: 16,
+  },
+  errorModalButton: {
+    backgroundColor: KDS_COLORS.urgent,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  errorModalButtonText: {
+    color: KDS_COLORS.text,
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

@@ -367,9 +367,9 @@
   - [ ] Test with large datasets
 
 ### KDS UI Integration
-- [ ] Connect KDS UI to context (CRITICAL)
-  - [ ] Replace mock data in expo.tsx with useKDSInventory()
-  - [ ] Replace mock data in station.tsx with real context
-  - [ ] Replace mock data in plating.tsx with real context
-  - [ ] Add loading states and error handling
-  - [ ] Test end-to-end KDS workflow
+- [x] Connect KDS UI to context (CRITICAL)
+  - [x] Replace mock data in expo.tsx with useKDSInventory()
+  - [x] Replace mock data in station.tsx with real context
+  - [x] Replace mock data in plating.tsx with real context
+  - [x] Add loading states and error handling
+  - [x] Test end-to-end KDS workflow

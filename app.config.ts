@@ -33,14 +33,14 @@ const config: ExpoConfig = {
   primaryColor: "#1e3a8a",
   platforms: ["ios", "android", "web"],
   orientation: "portrait",
-  icon: "./assets/images/icon.png",
+  icon: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663275914992/GwaRvdwBaNVpzTMg.png",
   runtimeVersion: "1.0.0",
   notification: {
-    icon: "./assets/images/icon.png",
+    icon: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663275914992/GwaRvdwBaNVpzTMg.png",
     color: "#1e3a8a",
   },
   splash: {
-    image: "./assets/images/splash-icon.png",
+    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663275914992/FqDsofnIUvmQereA.png",
     resizeMode: "contain",
     backgroundColor: "#1e3a8a",
   },
@@ -86,7 +86,7 @@ const config: ExpoConfig = {
   web: {
     bundler: "metro",
     output: "static",
-    favicon: "./assets/images/icon.png",
+    favicon: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663275914992/GwaRvdwBaNVpzTMg.png",
     backgroundColor: "#ffffff",
     scope: "/caterking",
   },
@@ -108,7 +108,7 @@ const config: ExpoConfig = {
     [
       "expo-splash-screen",
       {
-        image: "./assets/images/splash-icon.png",
+        image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663275914992/FqDsofnIUvmQereA.png",
         imageWidth: 300,
         resizeMode: "contain",
         backgroundColor: "#1e3a8a",

@@ -6,10 +6,13 @@ import {
   StyleSheet,
   FlatList,
   ScrollView,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { Platform } from "react-native";
+import { handleCourseCompletion } from "@/lib/kds-inventory-integration";
 
 // KDS Color palette
 const KDS_COLORS = {
@@ -31,6 +34,7 @@ interface TableGroup {
   name: string;
   guestCount: number;
   courses: CourseStatus[];
+  eventId?: string; // For inventory tracking
 }
 
 interface CourseStatus {
@@ -40,6 +44,7 @@ interface CourseStatus {
   itemCount: number;
   readyCount: number;
   firedAt?: Date;
+  menuItemIds?: string[]; // For inventory tracking
 }
 
 interface StationStatus {
@@ -56,33 +61,36 @@ const MOCK_TABLE_GROUPS: TableGroup[] = [
     id: "1",
     name: "Tables 1-4",
     guestCount: 32,
+    eventId: "event-wedding",
     courses: [
-      { courseNumber: 1, name: "Appetizers", status: "served", itemCount: 4, readyCount: 4 },
-      { courseNumber: 2, name: "Salads", status: "ready", itemCount: 3, readyCount: 3 },
-      { courseNumber: 3, name: "Main Course", status: "in_progress", itemCount: 5, readyCount: 2 },
-      { courseNumber: 4, name: "Dessert", status: "pending", itemCount: 2, readyCount: 0 },
+      { courseNumber: 1, name: "Appetizers", status: "served", itemCount: 4, readyCount: 4, menuItemIds: ["menu-app1", "menu-app2"] },
+      { courseNumber: 2, name: "Salads", status: "ready", itemCount: 3, readyCount: 3, menuItemIds: ["menu-salad1"] },
+      { courseNumber: 3, name: "Main Course", status: "in_progress", itemCount: 5, readyCount: 2, menuItemIds: ["menu-main1", "menu-main2"] },
+      { courseNumber: 4, name: "Dessert", status: "pending", itemCount: 2, readyCount: 0, menuItemIds: ["menu-dessert1"] },
     ],
   },
   {
     id: "2",
     name: "Tables 5-8",
     guestCount: 28,
+    eventId: "event-wedding",
     courses: [
-      { courseNumber: 1, name: "Appetizers", status: "served", itemCount: 4, readyCount: 4 },
-      { courseNumber: 2, name: "Salads", status: "fired", itemCount: 3, readyCount: 0 },
-      { courseNumber: 3, name: "Main Course", status: "pending", itemCount: 5, readyCount: 0 },
-      { courseNumber: 4, name: "Dessert", status: "pending", itemCount: 2, readyCount: 0 },
+      { courseNumber: 1, name: "Appetizers", status: "served", itemCount: 4, readyCount: 4, menuItemIds: ["menu-app1", "menu-app2"] },
+      { courseNumber: 2, name: "Salads", status: "fired", itemCount: 3, readyCount: 0, menuItemIds: ["menu-salad1"] },
+      { courseNumber: 3, name: "Main Course", status: "pending", itemCount: 5, readyCount: 0, menuItemIds: ["menu-main1", "menu-main2"] },
+      { courseNumber: 4, name: "Dessert", status: "pending", itemCount: 2, readyCount: 0, menuItemIds: ["menu-dessert1"] },
     ],
   },
   {
     id: "3",
     name: "Tables 9-12",
     guestCount: 36,
+    eventId: "event-wedding",
     courses: [
-      { courseNumber: 1, name: "Appetizers", status: "in_progress", itemCount: 4, readyCount: 2 },
-      { courseNumber: 2, name: "Salads", status: "pending", itemCount: 3, readyCount: 0 },
-      { courseNumber: 3, name: "Main Course", status: "pending", itemCount: 5, readyCount: 0 },
-      { courseNumber: 4, name: "Dessert", status: "pending", itemCount: 2, readyCount: 0 },
+      { courseNumber: 1, name: "Appetizers", status: "in_progress", itemCount: 4, readyCount: 2, menuItemIds: ["menu-app1", "menu-app2"] },
+      { courseNumber: 2, name: "Salads", status: "pending", itemCount: 3, readyCount: 0, menuItemIds: ["menu-salad1"] },
+      { courseNumber: 3, name: "Main Course", status: "pending", itemCount: 5, readyCount: 0, menuItemIds: ["menu-main1", "menu-main2"] },
+      { courseNumber: 4, name: "Dessert", status: "pending", itemCount: 2, readyCount: 0, menuItemIds: ["menu-dessert1"] },
     ],
   },
 ];
@@ -99,6 +107,10 @@ export default function ExpoStation() {
   const [tableGroups, setTableGroups] = useState<TableGroup[]>(MOCK_TABLE_GROUPS);
   const [stations, setStations] = useState<StationStatus[]>(MOCK_STATIONS);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingError, setProcessingError] = useState<string | null>(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [processingCourse, setProcessingCourse] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -127,26 +139,66 @@ export default function ExpoStation() {
     );
   };
 
-  const handleMarkServed = (tableGroupId: string, courseNumber: number) => {
-    if (Platform.OS !== "web") {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
+  const handleMarkServed = async (tableGroupId: string, courseNumber: number) => {
+    const tableGroup = tableGroups.find((g) => g.id === tableGroupId);
+    const course = tableGroup?.courses.find((c) => c.courseNumber === courseNumber);
 
-    setTableGroups((prev) =>
-      prev.map((group) => {
-        if (group.id === tableGroupId) {
-          return {
-            ...group,
-            courses: group.courses.map((course) =>
-              course.courseNumber === courseNumber
-                ? { ...course, status: "served" as const }
-                : course
-            ),
-          };
+    if (!tableGroup || !course) return;
+
+    setIsProcessing(true);
+    setProcessingCourse(`${tableGroupId}-${courseNumber}`);
+    setProcessingError(null);
+
+    try {
+      // Call inventory transaction system for course completion
+      const result = await handleCourseCompletion(
+        `course-${tableGroupId}-${courseNumber}`,
+        tableGroup.eventId || "event-default",
+        course.menuItemIds || [],
+        course.itemCount
+      );
+
+      if (result.success) {
+        // Haptic feedback for success
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
-        return group;
-      })
-    );
+
+        // Update course status
+        setTableGroups((prev) =>
+          prev.map((group) => {
+            if (group.id === tableGroupId) {
+              return {
+                ...group,
+                courses: group.courses.map((c) =>
+                  c.courseNumber === courseNumber
+                    ? { ...c, status: "served" as const }
+                    : c
+                ),
+              };
+            }
+            return group;
+          })
+        );
+      } else {
+        // Show error to operator
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+        setProcessingError(result.message);
+        setShowErrorModal(true);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+      setProcessingError(`Failed to mark course served: ${errorMessage}`);
+      setShowErrorModal(true);
+    } finally {
+      setIsProcessing(false);
+      setProcessingCourse(null);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -190,6 +242,7 @@ export default function ExpoStation() {
     const canFire = course.status === "pending";
     const canServe = course.status === "ready";
     const isActive = course.status === "fired" || course.status === "in_progress";
+    const isProcessingThisCourse = processingCourse === `${tableGroupId}-${course.courseNumber}`;
 
     return (
       <View key={course.courseNumber} style={styles.courseRow}>
@@ -219,6 +272,7 @@ export default function ExpoStation() {
             <TouchableOpacity
               onPress={() => handleFireCourse(tableGroupId, course.courseNumber)}
               style={styles.fireButton}
+              disabled={isProcessing}
             >
               <Text style={styles.fireButtonText}>🔥 FIRE</Text>
             </TouchableOpacity>
@@ -226,9 +280,17 @@ export default function ExpoStation() {
           {canServe && (
             <TouchableOpacity
               onPress={() => handleMarkServed(tableGroupId, course.courseNumber)}
-              style={styles.serveButton}
+              style={[
+                styles.serveButton,
+                isProcessingThisCourse && styles.serveButtonProcessing,
+              ]}
+              disabled={isProcessing}
             >
-              <Text style={styles.serveButtonText}>✓ SERVED</Text>
+              {isProcessingThisCourse ? (
+                <ActivityIndicator size="small" color={KDS_COLORS.text} />
+              ) : (
+                <Text style={styles.serveButtonText}>✓ SERVED</Text>
+              )}
             </TouchableOpacity>
           )}
           {isActive && (
@@ -310,6 +372,7 @@ export default function ExpoStation() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.tableGroupList}
             showsVerticalScrollIndicator={false}
+            scrollEnabled={!isProcessing}
           />
         </View>
 
@@ -319,24 +382,32 @@ export default function ExpoStation() {
           <View style={styles.stationsGrid}>
             {stations.map(renderStationStatus)}
           </View>
-
-          {/* Quick Stats */}
-          <View style={styles.quickStats}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>3</Text>
-              <Text style={styles.statLabel}>Courses Served</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={[styles.statValue, { color: KDS_COLORS.warning }]}>2</Text>
-              <Text style={styles.statLabel}>In Progress</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={[styles.statValue, { color: KDS_COLORS.ready }]}>1</Text>
-              <Text style={styles.statLabel}>Ready to Serve</Text>
-            </View>
-          </View>
         </View>
       </View>
+
+      {/* Error Modal */}
+      <Modal
+        visible={showErrorModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowErrorModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.errorModal}>
+            <Text style={styles.errorModalTitle}>⚠️ Course Completion Failed</Text>
+            <Text style={styles.errorModalMessage}>{processingError}</Text>
+            <Text style={styles.errorModalSubtext}>
+              The course status has been reverted. Please check inventory and retry.
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowErrorModal(false)}
+              style={styles.errorModalButton}
+            >
+              <Text style={styles.errorModalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -350,49 +421,47 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingTop: 48,
-    paddingBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: KDS_COLORS.surface,
     borderBottomWidth: 2,
-    borderBottomColor: KDS_COLORS.border,
+    borderBottomColor: KDS_COLORS.fire,
   },
   backButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: KDS_COLORS.surface,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   backButtonText: {
     color: KDS_COLORS.text,
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "600",
   },
   headerCenter: {
+    flex: 1,
     alignItems: "center",
   },
   headerTitle: {
-    color: KDS_COLORS.fire,
-    fontSize: 28,
-    fontWeight: "800",
-    letterSpacing: 1,
+    fontSize: 20,
+    fontWeight: "bold",
+    color: KDS_COLORS.text,
+    marginBottom: 4,
   },
   eventName: {
+    fontSize: 12,
     color: KDS_COLORS.textMuted,
-    fontSize: 16,
-    marginTop: 4,
   },
   headerRight: {
     alignItems: "flex-end",
   },
   timeLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
     color: KDS_COLORS.text,
-    fontSize: 32,
-    fontWeight: "700",
-    fontVariant: ["tabular-nums"],
   },
   guestTotal: {
+    fontSize: 12,
     color: KDS_COLORS.textMuted,
-    fontSize: 14,
+    marginTop: 4,
   },
   mainContent: {
     flex: 1,
@@ -400,52 +469,60 @@ const styles = StyleSheet.create({
   },
   leftPanel: {
     flex: 2,
-    borderRightWidth: 2,
+    borderRightWidth: 1,
     borderRightColor: KDS_COLORS.border,
-    padding: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
   },
   rightPanel: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
   },
   panelTitle: {
-    color: KDS_COLORS.textMuted,
     fontSize: 14,
-    fontWeight: "700",
-    letterSpacing: 1,
-    marginBottom: 16,
+    fontWeight: "bold",
+    color: KDS_COLORS.text,
+    marginBottom: 12,
+    textTransform: "uppercase",
   },
   tableGroupList: {
-    gap: 16,
+    gap: 12,
   },
   tableGroupCard: {
     backgroundColor: KDS_COLORS.surface,
-    borderRadius: 12,
+    borderRadius: 8,
     overflow: "hidden",
+    marginBottom: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: KDS_COLORS.fire,
   },
   tableGroupHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     backgroundColor: KDS_COLORS.surfaceLight,
+    borderBottomWidth: 1,
+    borderBottomColor: KDS_COLORS.border,
   },
   tableGroupName: {
+    fontSize: 14,
+    fontWeight: "bold",
     color: KDS_COLORS.text,
-    fontSize: 20,
-    fontWeight: "700",
   },
   guestCount: {
+    fontSize: 12,
     color: KDS_COLORS.textMuted,
-    fontSize: 14,
   },
   coursesContainer: {
-    padding: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   courseRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: KDS_COLORS.border,
   },
@@ -453,127 +530,151 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   courseName: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: "600",
+    marginBottom: 4,
   },
   courseProgress: {
+    fontSize: 11,
     color: KDS_COLORS.textMuted,
-    fontSize: 12,
-    marginTop: 2,
   },
   courseStatus: {
     flexDirection: "row",
     alignItems: "center",
-    width: 120,
-    gap: 8,
+    marginHorizontal: 12,
+    minWidth: 100,
   },
   statusIndicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
   },
   statusText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
   },
   courseActions: {
-    width: 140,
-    alignItems: "flex-end",
+    flexDirection: "row",
+    gap: 8,
   },
   fireButton: {
     backgroundColor: KDS_COLORS.fire,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 4,
   },
   fireButtonText: {
     color: KDS_COLORS.text,
-    fontSize: 16,
-    fontWeight: "800",
+    fontSize: 11,
+    fontWeight: "bold",
   },
   serveButton: {
     backgroundColor: KDS_COLORS.ready,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 4,
+  },
+  serveButtonProcessing: {
+    opacity: 0.7,
   },
   serveButtonText: {
     color: KDS_COLORS.text,
-    fontSize: 16,
-    fontWeight: "800",
+    fontSize: 11,
+    fontWeight: "bold",
   },
   progressIndicator: {
-    backgroundColor: KDS_COLORS.warning + "30",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    backgroundColor: KDS_COLORS.warning,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 4,
   },
   progressText: {
-    color: KDS_COLORS.warning,
-    fontSize: 12,
-    fontWeight: "700",
+    color: KDS_COLORS.text,
+    fontSize: 10,
+    fontWeight: "bold",
   },
   stationsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
     gap: 12,
   },
   stationCard: {
-    width: "47%",
     backgroundColor: KDS_COLORS.surface,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 8,
+    padding: 12,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: KDS_COLORS.border,
   },
   stationCardWarning: {
-    borderWidth: 2,
-    borderColor: KDS_COLORS.warning,
+    borderColor: KDS_COLORS.urgent,
+    backgroundColor: KDS_COLORS.surfaceLight,
   },
   stationName: {
-    color: KDS_COLORS.textMuted,
     fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
+    fontWeight: "bold",
+    color: KDS_COLORS.text,
+    marginBottom: 8,
   },
   stationQueue: {
-    fontSize: 48,
-    fontWeight: "800",
-    marginVertical: 4,
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 4,
   },
   stationLabel: {
+    fontSize: 10,
     color: KDS_COLORS.textMuted,
-    fontSize: 12,
+    marginBottom: 8,
   },
   stationTimer: {
-    color: KDS_COLORS.textMuted,
     fontSize: 11,
-    marginTop: 8,
+    color: KDS_COLORS.ready,
+    fontWeight: "600",
   },
   stationTimerWarning: {
-    color: KDS_COLORS.warning,
-    fontWeight: "700",
+    color: KDS_COLORS.urgent,
   },
-  quickStats: {
-    flexDirection: "row",
-    marginTop: 24,
-    gap: 12,
-  },
-  statCard: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: KDS_COLORS.surface,
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
     alignItems: "center",
   },
-  statValue: {
-    color: KDS_COLORS.text,
-    fontSize: 32,
-    fontWeight: "800",
+  errorModal: {
+    backgroundColor: KDS_COLORS.surface,
+    borderRadius: 12,
+    padding: 24,
+    width: "80%",
+    maxWidth: 400,
+    borderLeftWidth: 4,
+    borderLeftColor: KDS_COLORS.urgent,
   },
-  statLabel: {
+  errorModalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: KDS_COLORS.text,
+    marginBottom: 12,
+  },
+  errorModalMessage: {
+    fontSize: 14,
+    color: KDS_COLORS.text,
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  errorModalSubtext: {
+    fontSize: 12,
     color: KDS_COLORS.textMuted,
-    fontSize: 11,
-    marginTop: 4,
-    textAlign: "center",
+    marginBottom: 16,
+  },
+  errorModalButton: {
+    backgroundColor: KDS_COLORS.urgent,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  errorModalButtonText: {
+    color: KDS_COLORS.text,
+    fontSize: 14,
+    fontWeight: "600",
   },
 });
