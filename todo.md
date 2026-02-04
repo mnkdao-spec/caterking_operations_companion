@@ -391,10 +391,10 @@
 - [ ] Test multi-tablet synchronization
 
 ### Replace Mock Data with Live Queries
-- [ ] Update expo.tsx to use useKDSTableGroups and useKDSOrders
-- [ ] Update station.tsx to use useKDSOrders and useKDSInventory
-- [ ] Update plating.tsx to use useKDSOrders and useKDSInventory
-- [ ] Add loading states and error handling for all queries
+- [x] Update expo.tsx to use useKDSTableGroups and useKDSOrders
+- [x] Update station.tsx to use useKDSOrders and useKDSInventory
+- [x] Update plating.tsx to use useKDSOrders and useKDSInventory
+- [x] Add loading states and error handling for all queries
 
 ### KDS Operator Training UI
 - [x] Create kds-help.tsx screen with training content

@@ -21,6 +21,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { handleOrderItemCompletion } from "@/lib/kds-inventory-integration";
 import { KDSErrorRecovery } from "@/components/kds-error-recovery";
+import { useKDSRealtimeData } from "@/hooks/use-kds-realtime";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -193,16 +194,28 @@ export default function StationDisplay() {
   const stationType = params.stationType || "grill";
   const stationName = params.stationName || "GRILL";
 
+  const [eventId] = useState("event-wedding"); // From navigation params in real app
+  const { orders: liveOrders, loading, error } = useKDSRealtimeData(eventId, stationType);
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [bumpingId, setBumpingId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingError, setProcessingError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [eventId] = useState("event-wedding"); // From navigation params in real app
+
+  // Use live data when available, fallback to mock data
+  useEffect(() => {
+    if (!loading && liveOrders.length > 0) {
+      setOrders(liveOrders as any);
+    } else if (!loading) {
+      setOrders(generateMockOrders(stationType));
+    }
+  }, [liveOrders, loading, stationType]);
 
   useEffect(() => {
-    setOrders(generateMockOrders(stationType));
+    if (orders.length === 0) {
+      setOrders(generateMockOrders(stationType));
+    }
   }, [stationType]);
 
   useEffect(() => {

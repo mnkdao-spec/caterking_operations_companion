@@ -14,6 +14,8 @@ import * as Haptics from "expo-haptics";
 import { Platform } from "react-native";
 import { handleCourseCompletion } from "@/lib/kds-inventory-integration";
 import { KDSErrorRecovery } from "@/components/kds-error-recovery";
+import { useKDSRealtimeData } from "@/hooks/use-kds-realtime";
+import { useEffect, useState } from "react";
 
 // KDS Color palette
 const KDS_COLORS = {
@@ -105,6 +107,8 @@ const MOCK_STATIONS: StationStatus[] = [
 ];
 
 export default function ExpoStation() {
+  const [eventId] = useState("event-wedding"); // From navigation params in real app
+  const { tableGroups: liveTableGroups, stations: liveStations, loading, error } = useKDSRealtimeData(eventId);
   const [tableGroups, setTableGroups] = useState<TableGroup[]>(MOCK_TABLE_GROUPS);
   const [stations, setStations] = useState<StationStatus[]>(MOCK_STATIONS);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -112,7 +116,16 @@ export default function ExpoStation() {
   const [processingError, setProcessingError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [processingCourse, setProcessingCourse] = useState<string | null>(null);
-  const [eventId] = useState("event-wedding"); // From navigation params in real app
+
+  // Use live data when available, fallback to mock data
+  useEffect(() => {
+    if (!loading && liveTableGroups.length > 0) {
+      setTableGroups(liveTableGroups as any);
+    }
+    if (!loading && liveStations.length > 0) {
+      setStations(liveStations as any);
+    }
+  }, [liveTableGroups, liveStations, loading])
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);

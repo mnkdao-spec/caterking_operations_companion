@@ -14,6 +14,7 @@ import * as Haptics from "expo-haptics";
 import { Platform } from "react-native";
 import { handleBatchOrderCompletion } from "@/lib/kds-inventory-integration";
 import { KDSErrorRecovery } from "@/components/kds-error-recovery";
+import { useKDSRealtimeData } from "@/hooks/use-kds-realtime";
 
 // KDS Color palette
 const KDS_COLORS = {
@@ -113,6 +114,8 @@ const MOCK_PLATE_ORDERS: PlateOrder[] = [
 ];
 
 export default function PlatingStation() {
+  const [eventId] = useState("event-wedding"); // From navigation params in real app
+  const { orders: liveOrders, loading, error } = useKDSRealtimeData(eventId, "plating");
   const [orders, setOrders] = useState<PlateOrder[]>(MOCK_PLATE_ORDERS);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [filter, setFilter] = useState<"all" | "ready" | "waiting">("all");
@@ -120,7 +123,15 @@ export default function PlatingStation() {
   const [processingError, setProcessingError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [completedCount, setCompletedCount] = useState(0);
-  const [eventId] = useState("event-wedding"); // From navigation params in real app
+
+  // Use live data when available, fallback to mock data
+  useEffect(() => {
+    if (!loading && liveOrders.length > 0) {
+      setOrders(liveOrders as any);
+    } else if (!loading) {
+      setOrders(MOCK_PLATE_ORDERS);
+    }
+  }, [liveOrders, loading])
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
