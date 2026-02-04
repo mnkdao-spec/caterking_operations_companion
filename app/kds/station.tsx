@@ -20,6 +20,7 @@ import Animated, {
   withSequence,
 } from "react-native-reanimated";
 import { handleOrderItemCompletion } from "@/lib/kds-inventory-integration";
+import { KDSErrorRecovery } from "@/components/kds-error-recovery";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -198,6 +199,7 @@ export default function StationDisplay() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingError, setProcessingError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [eventId] = useState("event-wedding"); // From navigation params in real app
 
   useEffect(() => {
     setOrders(generateMockOrders(stationType));
@@ -452,6 +454,15 @@ export default function StationDisplay() {
           </View>
         </View>
       </Modal>
+
+      {/* Error Recovery Panel */}
+      <KDSErrorRecovery
+        eventId={eventId}
+        autoDetect={true}
+        onRecoveryComplete={() => {
+          setOrders(generateMockOrders(stationType));
+        }}
+      />
     </View>
   );
 }

@@ -373,3 +373,33 @@
   - [x] Replace mock data in plating.tsx with real context
   - [x] Add loading states and error handling
   - [x] Test end-to-end KDS workflow
+
+
+## Phase 7: KDS Real-Time Integration & Operator Training
+
+### KDSErrorRecovery Integration
+- [x] Add KDSErrorRecovery component to expo.tsx root layout
+- [x] Add KDSErrorRecovery component to station.tsx root layout
+- [x] Add KDSErrorRecovery component to plating.tsx root layout
+- [x] Test error recovery auto-detection on all screens
+
+### Supabase Real-Time Subscriptions
+- [x] Create useKDSTableGroups hook with real-time subscription
+- [x] Create useKDSOrders hook with real-time subscription
+- [x] Create useKDSStations hook with real-time subscription
+- [x] Create useKDSInventory hook with real-time subscription
+- [ ] Test multi-tablet synchronization
+
+### Replace Mock Data with Live Queries
+- [ ] Update expo.tsx to use useKDSTableGroups and useKDSOrders
+- [ ] Update station.tsx to use useKDSOrders and useKDSInventory
+- [ ] Update plating.tsx to use useKDSOrders and useKDSInventory
+- [ ] Add loading states and error handling for all queries
+
+### KDS Operator Training UI
+- [x] Create kds-help.tsx screen with training content
+- [x] Add error recovery workflow documentation
+- [x] Add transaction rollback behavior explanation
+- [x] Add best practices for order completion
+- [x] Add troubleshooting guide
+- [ ] Link help screen to KDS navigation

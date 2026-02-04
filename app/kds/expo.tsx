@@ -13,6 +13,7 @@ import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { Platform } from "react-native";
 import { handleCourseCompletion } from "@/lib/kds-inventory-integration";
+import { KDSErrorRecovery } from "@/components/kds-error-recovery";
 
 // KDS Color palette
 const KDS_COLORS = {
@@ -111,6 +112,7 @@ export default function ExpoStation() {
   const [processingError, setProcessingError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [processingCourse, setProcessingCourse] = useState<string | null>(null);
+  const [eventId] = useState("event-wedding"); // From navigation params in real app
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -408,6 +410,15 @@ export default function ExpoStation() {
           </View>
         </View>
       </Modal>
+
+      {/* Error Recovery Panel */}
+      <KDSErrorRecovery
+        eventId={eventId}
+        autoDetect={true}
+        onRecoveryComplete={() => {
+          console.log("Recovery complete, refreshing KDS data");
+        }}
+      />
     </View>
   );
 }

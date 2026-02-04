@@ -13,6 +13,7 @@ import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { Platform } from "react-native";
 import { handleBatchOrderCompletion } from "@/lib/kds-inventory-integration";
+import { KDSErrorRecovery } from "@/components/kds-error-recovery";
 
 // KDS Color palette
 const KDS_COLORS = {
@@ -119,6 +120,7 @@ export default function PlatingStation() {
   const [processingError, setProcessingError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [completedCount, setCompletedCount] = useState(0);
+  const [eventId] = useState("event-wedding"); // From navigation params in real app
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -467,6 +469,15 @@ export default function PlatingStation() {
           </View>
         </View>
       </Modal>
+
+      {/* Error Recovery Panel */}
+      <KDSErrorRecovery
+        eventId={eventId}
+        autoDetect={true}
+        onRecoveryComplete={() => {
+          setOrders(MOCK_PLATE_ORDERS);
+        }}
+      />
     </View>
   );
 }
