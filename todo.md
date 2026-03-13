@@ -181,11 +181,11 @@
 - [x] Create calendar UI component with weekly view
 - [x] Build scheduling page with event list and staff roster
 - [ ] Implement drag-and-drop staff assignment
-- [ ] Create staff_availability table for time-off and unavailable periods
-- [ ] Implement conflict detection logic (check overlapping event times)
-- [ ] Add visual conflict warnings in scheduling UI
-- [ ] Prevent assignment submission when conflicts detected
-- [ ] Add conflict resolution suggestions
+- [x] Create staff_availability table for time-off and unavailable periods
+- [x] Implement conflict detection logic (check overlapping event times)
+- [x] Add visual conflict warnings in scheduling UI
+- [x] Prevent assignment submission when conflicts detected
+- [x] Add conflict resolution suggestions
 - [x] Add assignment CRUD operations (create, update, delete)
 - [x] Display assigned hours and pay calculations
 - [ ] Test scheduling functionality end-to-end
@@ -237,4 +237,169 @@
 - [x] Add "Generate Invoice" button for completed events
 - [x] Display invoice list with status
 - [x] Add Invoices link to navigation
-- [ ] Test invoice generation end-to-end
+- [x] Add PDF export functionality with jsPDF
+- [x] Create PDF generation utility function
+- [x] Add Download button to invoice cards
+- [ ] Test invoice generation and PDF export end-to-end
+
+
+## Recurring Invoice Templates
+
+- [x] Create invoice_templates table schema
+- [x] Create template_items table for line items
+- [x] Build template management page UI
+- [x] Implement create/edit/delete template functions
+- [x] Add frequency options (weekly, monthly, quarterly, annually)
+- [x] Implement automatic invoice generation from templates
+- [x] Add template scheduling and next generation date tracking
+- [x] Create background job for automatic invoice generation
+- [ ] Add template preview functionality
+- [ ] Test recurring invoice generation end-to-end
+
+
+## Email Notifications
+
+- [ ] Set up email service (SendGrid or similar)
+- [ ] Create email templates for different events
+- [ ] Implement event confirmation email notifications
+- [ ] Implement staff assignment change notifications
+- [ ] Implement invoice generation email notifications
+- [ ] Add email notification preferences to user settings
+- [ ] Test email delivery for all notification types
+
+## Real-Time Dashboard Updates
+
+- [ ] Set up WebSocket server
+- [ ] Implement real-time event creation updates
+- [ ] Implement real-time event status change updates
+- [ ] Implement real-time invoice generation updates
+- [ ] Add WebSocket client to dashboard
+- [ ] Implement automatic data refresh on WebSocket messages
+- [ ] Test real-time updates across multiple browser tabs
+
+
+## Phase 5: UI/UX Polish & Enhanced Forms (In Progress)
+
+- [x] OLD-82: Offline Indicator Component - Shows sync status with pending count
+- [x] OLD-83: Conflict Resolution UI - Manual and automatic resolution with 5 strategies
+- [x] OLD-84: Loading States & Error Handling - Spinners, skeletons, error displays, toast notifications
+- [x] OLD-85: Mobile App Branding - Custom catering-themed icon and splash screen
+- [ ] Integrate enhanced forms into app pages - Replace existing forms with EventFormEnhanced, StaffFormEnhanced, InvoiceFormEnhanced
+  - [ ] Replace event forms in web pages with EventFormEnhanced
+  - [ ] Replace staff forms in web pages with StaffFormEnhanced
+  - [ ] Replace invoice forms in web pages with InvoiceFormEnhanced
+  - [ ] Replace event forms in mobile screens with EventFormScreen
+  - [ ] Replace staff forms in mobile screens with StaffFormScreen
+  - [ ] Replace invoice forms in mobile screens with InvoiceFormScreen
+  - [ ] Test all form submissions with loading states and error handling
+- [ ] OLD-86: Web Dashboard Redesign - Improve card designs, spacing, visual hierarchy
+- [ ] OLD-87: Accessibility Improvements - ARIA labels, keyboard navigation, WCAG 2.1 AA compliance
+- [ ] OLD-88: Performance Optimization - Code splitting, lazy loading, image optimization, caching
+
+
+## Phase 6: Critical Technical Improvements (Immediate Priorities)
+
+### Authentication & Security
+- [ ] Unify dual authentication systems (Manus OAuth + Supabase Auth)
+  - [ ] Integrate OAuth response with Supabase session
+  - [ ] Remove duplicate auth context
+  - [ ] Test unified auth flow
+- [ ] Implement token refresh mechanism
+  - [ ] Add refresh token storage
+  - [ ] Create token refresh logic
+  - [ ] Handle token expiration gracefully
+- [ ] Add CSRF protection to API calls
+  - [ ] Implement CSRF token generation on backend
+  - [ ] Add CSRF token validation middleware
+  - [ ] Include CSRF token in all mutations
+
+### Data Integrity & Consistency
+- [ ] Fix inventory rollback issue in KDS
+  - [ ] Reverse operation order (decrement before bump)
+  - [ ] OR create database transaction wrapper
+  - [ ] Add comprehensive error handling
+  - [ ] Test rollback scenarios
+- [ ] Fix N+1 query pattern in KDS
+  - [ ] Batch load order items instead of per-course queries
+  - [ ] Implement client-side grouping
+  - [ ] Measure performance improvement
+
+### Code Quality & Maintainability
+- [ ] Add TypeScript interfaces for Web ERP services
+  - [ ] Create service-types.ts with all entity interfaces
+  - [ ] Update all service functions with proper types
+  - [ ] Add validation for all parameters
+- [ ] Extract code duplication in Web ERP
+  - [ ] Create use-crud-list.ts hook
+  - [ ] Refactor Events, Clients, Staff, Menus pages
+  - [ ] Reduce codebase by ~1,200 lines
+- [ ] Split large service file (web/lib/supabase-services.ts)
+  - [ ] Create web/lib/services/ directory
+  - [ ] Split into events.ts, clients.ts, staff.ts, assignments.ts, invoices.ts, templates.ts, realtime.ts
+  - [ ] Update all imports across web app
+- [ ] Standardize error handling across services
+  - [ ] Create ServiceResult<T> type
+  - [ ] Apply to all service functions
+  - [ ] Update UI components to handle consistent error format
+
+### Offline & Sync
+- [ ] Unify offline queue systems
+  - [ ] Deprecate simple offline-queue.ts
+  - [ ] Migrate KDS to OfflineSyncManager
+  - [ ] Create offline-sync-helpers.ts for KDS operations
+  - [ ] Test offline operations and sync
+- [ ] Implement conflict resolution in offline sync
+  - [ ] Add ConflictStrategy enum
+  - [ ] Implement conflict detection (409 responses)
+  - [ ] Add resolver for client-wins, server-wins, manual strategies
+  - [ ] Test conflict scenarios
+
+### Validation & Input Handling
+- [ ] Add input validation with Zod
+  - [ ] Create validation schemas for all entities
+  - [ ] Add form-level validation
+  - [ ] Display validation errors in UI
+  - [ ] Test all validation rules
+- [ ] Move filtering to server-side
+  - [ ] Update service functions to accept filter parameters
+  - [ ] Implement pagination
+  - [ ] Add sorting options
+  - [ ] Test with large datasets
+
+### KDS UI Integration
+- [x] Connect KDS UI to context (CRITICAL)
+  - [x] Replace mock data in expo.tsx with useKDSInventory()
+  - [x] Replace mock data in station.tsx with real context
+  - [x] Replace mock data in plating.tsx with real context
+  - [x] Add loading states and error handling
+  - [x] Test end-to-end KDS workflow
+
+
+## Phase 7: KDS Real-Time Integration & Operator Training
+
+### KDSErrorRecovery Integration
+- [x] Add KDSErrorRecovery component to expo.tsx root layout
+- [x] Add KDSErrorRecovery component to station.tsx root layout
+- [x] Add KDSErrorRecovery component to plating.tsx root layout
+- [x] Test error recovery auto-detection on all screens
+
+### Supabase Real-Time Subscriptions
+- [x] Create useKDSTableGroups hook with real-time subscription
+- [x] Create useKDSOrders hook with real-time subscription
+- [x] Create useKDSStations hook with real-time subscription
+- [x] Create useKDSInventory hook with real-time subscription
+- [ ] Test multi-tablet synchronization
+
+### Replace Mock Data with Live Queries
+- [x] Update expo.tsx to use useKDSTableGroups and useKDSOrders
+- [x] Update station.tsx to use useKDSOrders and useKDSInventory
+- [x] Update plating.tsx to use useKDSOrders and useKDSInventory
+- [x] Add loading states and error handling for all queries
+
+### KDS Operator Training UI
+- [x] Create kds-help.tsx screen with training content
+- [x] Add error recovery workflow documentation
+- [x] Add transaction rollback behavior explanation
+- [x] Add best practices for order completion
+- [x] Add troubleshooting guide
+- [ ] Link help screen to KDS navigation
