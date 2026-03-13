@@ -7,7 +7,7 @@ import {
   getStaffAvailability,
   deleteStaffAvailability,
   checkStaffConflicts,
-} from '../lib/supabase-services';
+} from '../lib/services';
 
 describe('Staff Scheduling End-to-End', () => {
   describe('Staff Assignment to Events', () => {

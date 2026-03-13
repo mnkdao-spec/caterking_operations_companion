@@ -13,12 +13,18 @@ export class CateringDatabase {
   // CLIENTS
   // ============================================================================
 
-  async getClients(limit = 100, offset = 0) {
-    const { data, error } = await this.supabase
+  async getClients(limit = 100, offset = 0, search?: string) {
+    let query = this.supabase
       .from('clients')
-      .select('*')
+      .select('*');
+
+    if (search) {
+      query = query.ilike('client_name', `%${search}%`);
+    }
+
+    const { data, error } = await query
       .range(offset, offset + limit - 1)
-      .order('created_at', { ascending: false });
+      .order('client_name', { ascending: true });
 
     if (error) throw error;
     return data as DatabaseTypes.Client[];
@@ -71,12 +77,18 @@ export class CateringDatabase {
   // STAFF
   // ============================================================================
 
-  async getStaff(limit = 100, offset = 0) {
-    const { data, error } = await this.supabase
+  async getStaff(limit = 100, offset = 0, search?: string) {
+    let query = this.supabase
       .from('staff')
-      .select('*')
+      .select('*');
+
+    if (search) {
+      query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%`);
+    }
+
+    const { data, error } = await query
       .range(offset, offset + limit - 1)
-      .order('created_at', { ascending: false });
+      .order('last_name', { ascending: true });
 
     if (error) throw error;
     return data as DatabaseTypes.Staff[];
@@ -129,7 +141,7 @@ export class CateringDatabase {
   // EVENTS
   // ============================================================================
 
-  async getEvents(filters?: DatabaseTypes.EventFilters) {
+  async getEvents(filters?: DatabaseTypes.EventFilters & { search?: string }) {
     let query = this.supabase.from('events').select('*');
 
     if (filters?.clientId) {
@@ -140,6 +152,9 @@ export class CateringDatabase {
     }
     if (filters?.endDate) {
       query = query.lte('event_date', filters.endDate);
+    }
+    if (filters?.search) {
+      query = query.ilike('event_name', `%${filters.search}%`);
     }
 
     const limit = filters?.limit || 100;
@@ -235,7 +250,7 @@ export class CateringDatabase {
   // INVOICES
   // ============================================================================
 
-  async getInvoices(filters?: DatabaseTypes.InvoiceFilters) {
+  async getInvoices(filters?: DatabaseTypes.InvoiceFilters & { search?: string }) {
     let query = this.supabase.from('invoices').select('*');
 
     if (filters?.clientId) {
@@ -249,6 +264,9 @@ export class CateringDatabase {
     }
     if (filters?.endDate) {
       query = query.lte('invoice_date', filters.endDate);
+    }
+    if (filters?.search) {
+      query = query.ilike('invoice_number', `%${filters.search}%`);
     }
 
     const limit = filters?.limit || 100;
@@ -415,6 +433,225 @@ export class CateringDatabase {
       .eq('id', id);
 
     if (error) throw error;
+  }
+
+  // ============================================================================
+  // KDS (KITCHEN DISPLAY SYSTEM)
+  // ============================================================================
+
+  async getFiredCourses(eventId: string) {
+    const { data, error } = await this.supabase
+      .from('fired_courses')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('fired_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+  }
+
+  async createFiredCourse(firedCourse: any) {
+    const { data, error } = await this.supabase
+      .from('fired_courses')
+      .insert([firedCourse])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async updateFiredCourse(id: string, updates: any) {
+    const { data, error } = await this.supabase
+      .from('fired_courses')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async getOrderItems(firedCourseId: string) {
+    const { data, error } = await this.supabase
+      .from('order_items')
+      .select('*')
+      .eq('fired_course_id', firedCourseId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return data;
+  }
+
+  async createOrderItem(orderItem: any) {
+    const { data, error } = await this.supabase
+      .from('order_items')
+      .insert([orderItem])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async updateOrderItem(id: string, updates: any) {
+    const { data, error } = await this.supabase
+      .from('order_items')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  // ============================================================================
+  // PROCUREMENT & PAYABLES
+  // ============================================================================
+
+  async getPurchaseOrders(limit = 100, offset = 0) {
+    const { data, error } = await this.supabase
+      .from('purchase_orders')
+      .select('*, suppliers(name)')
+      .range(offset, offset + limit - 1)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+  }
+
+  async getPurchaseOrderById(id: string) {
+    const { data, error } = await this.supabase
+      .from('purchase_orders')
+      .select('*, po_items(*), suppliers(*)')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async createPurchaseOrder(po: Omit<DatabaseTypes.PurchaseOrder, 'id' | 'created_at' | 'updated_at'>) {
+    const { data, error } = await this.supabase
+      .from('purchase_orders')
+      .insert([po])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as DatabaseTypes.PurchaseOrder;
+  }
+
+  async updatePurchaseOrder(id: string, updates: Partial<DatabaseTypes.PurchaseOrder>) {
+    const { data, error } = await this.supabase
+      .from('purchase_orders')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as DatabaseTypes.PurchaseOrder;
+  }
+
+  async deletePurchaseOrder(id: string) {
+    const { error } = await this.supabase
+      .from('purchase_orders')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+
+  async createPOItem(item: Omit<DatabaseTypes.POItem, 'id' | 'created_at'>) {
+    const { data, error } = await this.supabase
+      .from('po_items')
+      .insert([item])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as DatabaseTypes.POItem;
+  }
+
+  async getPOItems(poId: string) {
+    const { data, error } = await this.supabase
+      .from('po_items')
+      .select('*')
+      .eq('po_id', poId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return data as DatabaseTypes.POItem[];
+  }
+
+  async updatePOItem(id: string, updates: Partial<DatabaseTypes.POItem>) {
+    const { data, error } = await this.supabase
+      .from('po_items')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as DatabaseTypes.POItem;
+  }
+
+  async deletePOItem(id: string) {
+    const { error } = await this.supabase
+      .from('po_items')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+
+  async logOCRAudit(log: Omit<DatabaseTypes.OCRAuditLog, 'id' | 'processed_at'>) {
+    const { data, error } = await this.supabase
+      .from('ocr_audit_logs')
+      .insert([log])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as DatabaseTypes.OCRAuditLog;
+  }
+
+  // ============================================================================
+  // STAFF SHIFTS & PAYROLL
+  // ============================================================================
+
+  async getStaffShifts(staffId?: string, eventId?: string) {
+    let query = this.supabase.from('staff_shifts').select('*, staff:staff_id(*), events:event_id(*)');
+    if (staffId) query = query.eq('staff_id', staffId);
+    if (eventId) query = query.eq('event_id', eventId);
+    
+    const { data, error } = await query.order('clock_in', { ascending: false });
+    if (error) throw error;
+    return data;
+  }
+
+  async createStaffShift(shift: any) {
+    const { data, error } = await this.supabase
+      .from('staff_shifts')
+      .insert([shift])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async updateStaffShift(id: string, updates: any) {
+    const { data, error } = await this.supabase
+      .from('staff_shifts')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
   }
 }
 

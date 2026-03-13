@@ -78,9 +78,7 @@ export function KDSInventoryProvider({ children }: { children: ReactNode }) {
         }
 
         // Get the order item to find the menu item
-        const orderItem = kds.firedCourses
-          .flatMap((fc) => fc.items || [])
-          .find((item) => item.id === itemId);
+        const orderItem = kds.orderItems.find((item) => item.id === itemId);
 
         if (!orderItem) {
           throw new Error("Order item not found");
@@ -92,7 +90,7 @@ export function KDSInventoryProvider({ children }: { children: ReactNode }) {
         // Decrement inventory
         const decrementResult = await decrementInventoryForOrderItem(
           kds.currentEvent.id,
-          orderItem.menuItemId,
+          orderItem.menu_item_id,
           itemId,
           orderItem.quantity
         );

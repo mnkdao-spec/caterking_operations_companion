@@ -177,6 +177,44 @@ export interface InventoryLog {
 }
 
 // ============================================================================
+// PROCUREMENT & PAYABLES ENTITIES
+// ============================================================================
+
+export type PurchaseOrderStatus = 'draft' | 'pending_approval' | 'approved' | 'partially_received' | 'received' | 'canceled';
+
+export interface PurchaseOrder {
+  id: string;
+  supplier_id: string;
+  status: PurchaseOrderStatus;
+  total_amount: number;
+  created_by?: string;
+  authorized_by?: string;
+  parent_po_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface POItem {
+  id: string;
+  po_id: string;
+  ingredient_id?: string;
+  description: string;
+  quantity_ordered: number;
+  quantity_received: number;
+  unit_price: number;
+  surge_threshold_percent: number;
+  created_at: string;
+}
+
+export interface OCRAuditLog {
+  id: string;
+  po_id?: string;
+  raw_json: any;
+  confidence_score?: number;
+  processed_at: string;
+}
+
+// ============================================================================
 // AVAILABILITY & SCHEDULING
 // ============================================================================
 

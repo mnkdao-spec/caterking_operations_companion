@@ -8,7 +8,7 @@
 // ============================================================================
 
 export type OperationType = 'create' | 'update' | 'delete' | 'custom';
-export type EntityType = 'client' | 'staff' | 'event' | 'invoice' | 'inventory' | 'assignment';
+export type EntityType = 'client' | 'staff' | 'event' | 'invoice' | 'inventory' | 'assignment' | 'fired_course' | 'order_item';
 export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed' | 'conflict';
 
 // ============================================================================

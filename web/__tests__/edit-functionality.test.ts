@@ -7,7 +7,7 @@ import {
   updateStaff,
   getStaffById,
   updateMenuItem,
-} from '../lib/supabase-services';
+} from '../lib/services';
 
 describe('Edit Functionality for All ERP Pages', () => {
   describe('Edit Events', () => {

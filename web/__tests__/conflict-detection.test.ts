@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { checkStaffConflicts } from '../lib/supabase-services';
+import { checkStaffConflicts } from '../lib/services';
 
 describe('Conflict Detection System', () => {
   describe('Staff Conflict Detection', () => {

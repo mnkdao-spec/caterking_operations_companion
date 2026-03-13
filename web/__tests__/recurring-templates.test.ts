@@ -9,7 +9,7 @@ import {
   getInvoiceTemplateItems,
   createInvoiceTemplateItem,
   deleteInvoiceTemplateItem,
-} from '../lib/supabase-services';
+} from '../lib/services';
 
 describe('Recurring Invoice Templates', () => {
   describe('Template Creation and Management', () => {

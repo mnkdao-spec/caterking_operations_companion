@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateInvoicesFromTemplates, getInvoiceTemplates } from '../lib/supabase-services';
+import { generateInvoicesFromTemplates, getInvoiceTemplates } from '../lib/services';
 import { generateInvoicePDF } from '../lib/pdf-generator';
 
 describe('Invoice Generation and PDF Export', () => {

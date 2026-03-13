@@ -8,7 +8,7 @@ import {
   deleteInvoiceTemplate,
   getClients,
   type InvoiceTemplate,
-} from '@/lib/supabase-services';
+} from '@/lib/services';
 
 export default function InvoiceTemplatesPage() {
   const router = useRouter();

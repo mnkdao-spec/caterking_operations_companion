@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { ConflictDetector } from '@/shared/conflict-detector';
-import { ConflictResolutionManager, getConflictResolutionManager } from '@/shared/conflict-resolution-manager';
-import { EntityConflict } from '@/shared/conflict-resolution-types';
+import { ConflictDetector } from '../../shared/conflict-detector';
+import { ConflictResolutionManager, getConflictResolutionManager } from '../../shared/conflict-resolution-manager';
+import { EntityConflict } from '../../shared/conflict-resolution-types';
 
 /**
  * Conflict Resolution Tests
