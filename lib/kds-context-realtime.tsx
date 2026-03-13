@@ -24,6 +24,7 @@ interface KDSRealtimeContextType {
   // State
   currentEvent: Event | null;
   firedCourses: FiredCourse[];
+  orderItems: OrderItem[];
   isLoading: boolean;
   error: string | null;
 
@@ -306,6 +307,7 @@ export function KDSRealtimeProvider({ children }: { children: ReactNode }) {
   const value: KDSRealtimeContextType = {
     currentEvent,
     firedCourses,
+    orderItems,
     isLoading,
     error,
     loadEvent,

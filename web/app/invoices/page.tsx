@@ -1,9 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import DashboardLayout from "@/components/dashboard-layout";
-import { getInvoices, getEvents, generateInvoiceForEvent, type Invoice } from "@/lib/supabase-services";
-import { FileText, Plus } from "lucide-react";
+import { getInvoices, getEvents, generateInvoiceForEvent, getInvoiceDetails, type Invoice } from "@/lib/supabase-services";
+import { FileText, Plus, Download, Printer, Loader2 } from "lucide-react";
+import { InvoicePDF } from "@/components/invoice-pdf";
+import { InvoicePreview } from "@/components/invoice-preview";
+
+// Dynamically import PDF components to avoid SSR issues
+const PDFDownloadLink = dynamic(
+  () => import("@react-pdf/renderer").then((mod) => mod.PDFDownloadLink),
+  { ssr: false }
+);
 
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -12,6 +21,9 @@ export default function InvoicesPage() {
   const [generating, setGenerating] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string>("");
   const [showGenerateModal, setShowGenerateModal] = useState(false);
+  
+  // For PDF generation
+  const [activeInvoice, setActiveInvoice] = useState<any>(null);
 
   useEffect(() => {
     loadData();
@@ -24,7 +36,7 @@ export default function InvoicesPage() {
         getEvents()
       ]);
       setInvoices(invoicesData);
-      setEvents(eventsData.filter((e: any) => e.status === 'completed'));
+      setEvents(eventsData.filter((e: any) => e.status === 'completed' || e.status === 'confirmed'));
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
@@ -32,21 +44,13 @@ export default function InvoicesPage() {
     }
   };
 
-  const handleGenerateInvoice = async () => {
-    if (!selectedEventId) return;
-    
-    setGenerating(true);
+  const handleFetchDetails = async (invoiceId: string) => {
     try {
-      await generateInvoiceForEvent(selectedEventId);
-      await loadData();
-      setShowGenerateModal(false);
-      setSelectedEventId("");
-      alert("Invoice generated successfully!");
+      const details = await getInvoiceDetails(invoiceId);
+      setActiveInvoice(details);
     } catch (error) {
-      console.error("Error generating invoice:", error);
-      alert("Failed to generate invoice");
-    } finally {
-      setGenerating(false);
+      console.error("Error fetching invoice details:", error);
+      alert("Failed to load invoice details");
     }
   };
 
@@ -109,16 +113,38 @@ export default function InvoicesPage() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-xl">${invoice.total_amount.toLocaleString()}</p>
+                      <p className="font-bold text-xl">${Number(invoice.total_amount).toLocaleString()}</p>
                       <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(invoice.status)}`}>
                         {invoice.status}
                       </span>
                     </div>
                   </div>
-                  <div className="mt-3 pt-3 border-t text-sm text-gray-600">
-                    <div className="flex justify-between">
-                      <span>Labor: ${invoice.labor_costs_total.toLocaleString()}</span>
-                      <span>Tax: ${invoice.tax_amount.toLocaleString()}</span>
+                  <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                    <div className="flex gap-4 text-xs text-gray-500">
+                      <span>Subtotal: ${Number(invoice.subtotal).toLocaleString()}</span>
+                      <span>HST (13%): ${Number(invoice.tax_total).toLocaleString()}</span>
+                      {Number(invoice.deposit_paid) > 0 && (
+                        <span className="text-green-600">Deposit: -${Number(invoice.deposit_paid).toLocaleString()}</span>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => handleFetchDetails(invoice.id)}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-xs font-bold transition-colors"
+                      >
+                        <Printer className="h-3 w-3" /> Preview
+                      </button>
+
+                      <PDFDownloadLink
+                        document={<InvoicePDF invoice={invoice} items={[]} client={{name: invoice.client_name}} />}
+                        fileName={`${invoice.invoice_number}.pdf`}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-bold transition-colors shadow-sm"
+                      >
+                        {({ loading }) => (
+                          loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Download className="h-3 w-3" /> Download PDF</>
+                        )}
+                      </PDFDownloadLink>
                     </div>
                   </div>
                 </div>
@@ -174,6 +200,13 @@ export default function InvoicesPage() {
           </div>
         )}
       </div>
+
+      <InvoicePreview 
+        isOpen={activeInvoice !== null}
+        onClose={() => setActiveInvoice(null)}
+        invoiceData={activeInvoice}
+        onRefresh={loadData}
+      />
     </DashboardLayout>
   );
 }

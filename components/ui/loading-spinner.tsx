@@ -1,4 +1,4 @@
-import { ActivityIndicator, View, Text } from "react-native";
+import { ActivityIndicator, View, Text, DimensionValue } from "react-native";
 import { useColors } from "@/hooks/use-colors";
 import { cn } from "@/lib/utils";
 
@@ -44,8 +44,8 @@ export function LoadingSpinner({
 }
 
 interface SkeletonProps {
-  width?: number | string;
-  height?: number | string;
+  width?: DimensionValue;
+  height?: DimensionValue;
   className?: string;
 }
 

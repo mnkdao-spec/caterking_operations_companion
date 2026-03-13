@@ -252,7 +252,7 @@ describe("Inventory Auto-Decrement Integration", () => {
         { ingredient_id: "ing-3", quantity: 1 },
       ];
 
-      const stock = {
+      const stock: Record<string, number> = {
         "ing-1": 50,
         "ing-2": 30,
         "ing-3": 100,

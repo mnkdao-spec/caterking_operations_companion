@@ -23,7 +23,9 @@ const navigation = [
   { name: "Clients", href: "/clients", icon: Users },
   { name: "Inventory", href: "/inventory", icon: Package },
   { name: "Invoices", href: "/invoices", icon: Receipt },
-  { name: "Reports", href: "/reports", icon: FileText },
+  { name: "Accounting", href: "/accounting", icon: DollarSign },
+  { name: "Forecaster", href: "/forecaster", icon: TrendingUp },
+  { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Staff", href: "/staff", icon: UserCog },
 ];
 

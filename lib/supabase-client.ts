@@ -70,7 +70,7 @@ if (isSupabaseConfigured && supabaseUrl && supabaseKey) {
 }
 
 // Export the client (will be null if not configured or during SSR)
-export const supabase = supabaseClient;
+export const supabase = supabaseClient as SupabaseClient;
 
 // Helper function to check if operations should use mock data
 export function useMockData(): boolean {

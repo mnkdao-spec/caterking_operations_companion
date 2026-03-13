@@ -132,7 +132,7 @@ const MOCK_EVENT: Event = {
 };
 
 export function KDSProvider({ children }: { children: ReactNode }) {
-  const [activeEvent, setActiveEvent] = useState<Event | null>(null);
+  const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
   const [firedCourses, setFiredCourses] = useState<FiredCourse[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -143,10 +143,10 @@ export function KDSProvider({ children }: { children: ReactNode }) {
 
   // Save data to storage whenever it changes
   useEffect(() => {
-    if (!loading && activeEvent) {
+    if (!loading && currentEvent) {
       saveKDSData();
     }
-  }, [activeEvent, firedCourses, loading]);
+  }, [currentEvent, firedCourses, loading]);
 
   const loadKDSData = async () => {
     try {
@@ -156,10 +156,10 @@ export function KDSProvider({ children }: { children: ReactNode }) {
         setFiredCourses(storedFiredCourses);
       }
       // Use mock event for now
-      setActiveEvent(MOCK_EVENT);
+      setCurrentEvent(MOCK_EVENT);
     } catch (error) {
       console.error("Error loading KDS data:", error);
-      setActiveEvent(MOCK_EVENT);
+      setCurrentEvent(MOCK_EVENT);
     } finally {
       setLoading(false);
     }

@@ -88,7 +88,7 @@ export const storage = {
    */
   async getAllKeys(): Promise<string[]> {
     try {
-      return await AsyncStorage.getAllKeys();
+      return (await AsyncStorage.getAllKeys()) as string[];
     } catch (error) {
       console.error("[Storage] Error getting all keys:", error);
       return [];
